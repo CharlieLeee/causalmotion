@@ -54,7 +54,7 @@ def get_training_parser():
             (to avoid state_dict problems) one you want to load, and then set the new styleinteg value in this parameter ')
     # computation
     parser.add_argument("--loader_num_workers", default=2, type=int)
-    parser.add_argument("--gpu_num", default="1", type=str)
+    parser.add_argument("--gpu_num", default="0", type=str)
     # training
     parser.add_argument("--best_k", default=1, type=int)
     parser.add_argument("--batch_size", default='', type=str)

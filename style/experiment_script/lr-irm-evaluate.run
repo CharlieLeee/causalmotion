@@ -1,0 +1,16 @@
+#!/bin/bash -l
+#SBATCH --job-name=imr-evaluate
+#SBATCH --nodes=1
+#SBATCH --chdir /home/ckli/causal_original/style/
+#SBATCH --mem=90G
+#SBATCH --gres=gpu:1
+#SBATCH --account=vita
+#SBATCH --time=16:00:00
+#SBATCH --cpus-per-task=20
+#SBATCH --output eval-lr-vanilla.out
+
+source ~/.bashrc
+conda activate motion
+
+bash scripts/evaluate_irm.sh
+bash scripts/extract_pretrain.sh

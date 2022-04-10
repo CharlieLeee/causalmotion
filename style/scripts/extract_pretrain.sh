@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-dataset=v4
+dataset=left_right_synthetic
 exp='pretrain'
 
 mkdir -p results/$dataset/$exp

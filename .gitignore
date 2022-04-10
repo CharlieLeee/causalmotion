@@ -134,3 +134,6 @@ style/runs/*
 style/results/*
 style/datasets/*
 *.json
+
+# Slurm log
+*.out

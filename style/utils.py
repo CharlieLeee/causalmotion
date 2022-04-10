@@ -142,12 +142,24 @@ def get_envs_path(dataset_name, dset_type, filter_envs):
     elif dataset_name in ['synthetic', 'v2', 'v2full', 'v4'] or 'synthetic' in dataset_name:
         envs_name = os.listdir(dset_path)
         if filter_envs!='':
-            filter_envs = [i for i in filter_envs.split('-')]
-            envs_name_ = []
-            for env_name in envs_name:
-                for filter_env in filter_envs:
-                    if filter_env+'_radius' in env_name:
-                        envs_name_.append(env_name)
+            filter_envs = [i for i in filter_envs.split('-')] # example 0.15r-0.35l-
+            envs_name_ = []    
+            if 'l' in filter_envs[0] or 'r' in filter_envs[0]:
+                multi_style = []
+                for i, tag in enumerate(filter_envs):
+                    if 'l' in tag:
+                        multi_style.append([tag.replace('l', ''), 'True_clockwise'])
+                    elif 'r' in tag:
+                        multi_style.append([tag.replace('r', ''), 'False_clockwise'])
+                for env_name in envs_name:
+                    for comb in multi_style:
+                        if comb[0] +'_radius' in env_name and comb[1] in env_name:
+                            envs_name_.append(env_name)
+            else:   
+                for env_name in envs_name:
+                    for filter_env in filter_envs:
+                        if filter_env +'_radius' in env_name:
+                            envs_name_.append(env_name)
             envs_name = envs_name_
         envs_path = [os.path.join(dset_path, env_name) for env_name in envs_name]
         return envs_path, envs_name

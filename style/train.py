@@ -20,11 +20,13 @@ def main(args):
     train_envs_path, train_envs_name = get_envs_path(args.dataset_name, "train", args.filter_envs)
     train_loaders = [data_loader(args, train_env_path, train_env_name) for train_env_path, train_env_name in
                      zip(train_envs_path, train_envs_name)]
-
+    logging.info(train_envs_name)
+    
     logging.info("Initializing Validation Set")
     val_envs_path, val_envs_name = get_envs_path(args.dataset_name, "val", args.filter_envs)#+'-'+args.filter_envs_pretrain)
     val_loaders = [data_loader(args, val_env_path, val_env_name) for val_env_path, val_env_name in
                    zip(val_envs_path, val_envs_name)]
+    logging.info(val_envs_name)
 
     # args.filter_envs_pretrain = ''
 
@@ -32,6 +34,7 @@ def main(args):
     val_envs_patho, val_envs_nameo = get_envs_path(args.dataset_name, "val", '0.7')
     val_loaderso = [data_loader(args, val_env_path, val_env_name) for val_env_path, val_env_name in
                    zip(val_envs_patho, val_envs_nameo)]
+    logging.info(val_envs_nameo)
 
     ref_pictures = [[b.cuda() for b in next(iter(loader))] for loader in val_loaders]
 

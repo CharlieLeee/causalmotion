@@ -1,0 +1,16 @@
+#!/bin/bash -l
+#SBATCH --job-name=lr-vanilla-2style
+#SBATCH --nodes=1
+#SBATCH --chdir /home/ckli/causal_original/style/
+#SBATCH --mem=200G
+#SBATCH --gres=gpu:1
+#SBATCH --account=vita
+#SBATCH --time=16:00:00
+#SBATCH --cpus-per-task=20
+#SBATCH --output vanilla-backbone-2style.out
+
+source ~/.bashrc
+conda activate motion
+
+
+bash scripts/pretrain_rule.sh

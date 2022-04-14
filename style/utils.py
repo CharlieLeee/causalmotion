@@ -4,7 +4,7 @@ import random
 from re import L
 import torch
 import numpy as np
-
+from loguru import logger
 NUMBER_PERSONS = 2
 NUMBER_COUPLES = 2
 

@@ -8,7 +8,9 @@ from models import CausalMotionModel
 from losses import criterion
 from visualize import draw_image, draw_solo, draw_solo_all
 
+from loguru import logger
 
+@logger.catch
 def main(args):
     # Set environment variables
     set_seed_globally(args.seed)
@@ -50,14 +52,52 @@ def main(args):
 
 
     # get labels of envs and create dic linking env name and env label
-    all_train_labels = sorted([float(d.split('_')[7]) for d in train_envs_name])
-    all_valid_labels = sorted([float(d.split('_')[7]) for d in val_envs_name])
-    all_valid_labelso = sorted([float(d.split('_')[7]) for d in val_envs_nameo])
-    # assert (all_train_labels == all_valid_labels)
-    train_labels = {name: all_train_labels.index(float(name.split('_')[7])) for name in train_envs_name}
-    val_labels = {name: all_valid_labels.index(float(name.split('_')[7])) for name in val_envs_name}
-    val_labelso = {name: all_valid_labelso.index(float(name.split('_')[7])) for name in val_envs_nameo}
-
+    # labels should be recalculated if considering left/right rule
+    if ('l' in  args.filter_envs) or ('r' in args.filter_envs):
+        logger.info('Using rule style...')
+        def get_orientation_info(envs_name):
+            style_float = []
+            for d in envs_name:
+                if 'True_clockwise' in  d:
+                    style_float.append(1)
+                elif 'False_clockwise' in d:
+                    style_float.append(-1)
+                else:
+                    raise Exception('no orientation data in the dataset, looking for [True/False]_clockwise')
+            return np.array(style_float)
+        train_style_info = get_orientation_info(train_envs_name)
+        val_style_info = get_orientation_info(val_envs_name)
+        valo_style_info = get_orientation_info(val_envs_nameo)
+        logger.info('train_enves_name {}'.format(train_envs_name))
+        
+        all_train_labels = sorted(set([float(d.split('_')[7]) for d in train_envs_name]*train_style_info))
+        all_valid_labels = sorted(set([float(d.split('_')[7]) for d in val_envs_name]*val_style_info))
+        all_valid_labelso = sorted(set([float(d.split('_')[7]) for d in val_envs_nameo]*valo_style_info))
+        logger.info('all_train_labels: {}'.format(all_train_labels))
+        # assert (all_train_labels == all_valid_labels)
+        def get_label_name(name):
+            radius = float(name.split('_')[7])
+            if 'True_clockwise' in name:
+                orientation = 1
+            elif 'False_clockwise' in name:
+                orientation = -1
+            return radius * orientation
+        train_labels = {name: all_train_labels.index(get_label_name(name)) for name in train_envs_name}
+        val_labels = {name: all_valid_labels.index(get_label_name(name)) for name in val_envs_name}
+        val_labelso = {name: all_valid_labelso.index(get_label_name(name)) for name in val_envs_nameo}
+        logger.info('train_labels: {}'.format(train_labels))
+        logger.info('val_labels: {}'.format(val_labels))
+    else:
+        all_train_labels = sorted(set([float(d.split('_')[7]) for d in train_envs_name]))
+        all_valid_labels = sorted(set([float(d.split('_')[7]) for d in val_envs_name]))
+        all_valid_labelso = sorted(set([float(d.split('_')[7]) for d in val_envs_nameo]))
+        logger.info('all_train_labels: {}'.format(all_train_labels))
+        # assert (all_train_labels == all_valid_labels)
+        train_labels = {name: all_train_labels.index(float(name.split('_')[7])) for name in train_envs_name}
+        val_labels = {name: all_valid_labels.index(float(name.split('_')[7])) for name in val_envs_name}
+        val_labelso = {name: all_valid_labelso.index(float(name.split('_')[7])) for name in val_envs_nameo}
+        logger.info('train_labels: {}'.format(train_labels))
+        logger.info('val_labels: {}'.format(val_labels))
     
     if args.filter_envs_pretrain:
         all_pretrain_labels = sorted(list( set(all_train_labels) | set([float(d.split('_')[7]) for d in pretrain_envs_name])))

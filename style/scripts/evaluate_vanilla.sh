@@ -3,7 +3,7 @@
 GPU=0 # 0. Set GPU
 EVALUATION="--metrics accuracy"
 exp="pretrain"
-dataset="left_right_synthetic" # 1. Set Dataset
+dataset="synthetic_lr_v2" # 1. Set Dataset
 dset_type="test"
 bs=64
 reduceall=9000
@@ -14,7 +14,7 @@ step="P3"
 epochs_string='0-0-100-0-0-0'
 epoch=100 
 irm=0.0 # 2. Set IRM
-for f_envs in "0.15" "0.2" "0.25" "0.3" "0.35" "0.4" 
+for f_envs in "0.1" "0.2" "0.3" "0.4" "0.5" "0.6" "0.7" 
 do
     DATA="--dataset_name $dataset --filter_envs $f_envs --batch_size $bs --dset_type $dset_type"
     for seed in 1 2 3 4

@@ -4,8 +4,8 @@
 GPU=0 # 1. Set GPU
 exp='pretrain_2style'
 
-dataset='left_right_synthetic' # 2. Set dataset
-f_envs='0.15r-0.2l-0.25r-0.3l-0.35r'
+dataset='synthetic_lr_v2' # 2. Set dataset
+f_envs='0.1r-0.1l-0.3r-0.3l-0.5r-0.5l'
 DATA="--dataset_name $dataset --filter_envs $f_envs --reduceall 9000"
 DIR="--tfdir runs/$dataset/$exp/$irm"
 bs=64

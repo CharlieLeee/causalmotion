@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from tqdm import tqdm
+from loguru import logger
 
 #from models import SimpleDecoder, SimpleEncoder, SimpleStyleEncoder
 from utils import NUMBER_PERSONS
@@ -82,7 +83,7 @@ class SimpleStyleEncoder(nn.Module):
 
     def forward(self, style_input, what):
         assert(what in set(['low', 'both', 'style', 'class']))
-        # for batch size 68
+        # for batch size 128
         # style 20 x 128 x 2
         style_input = torch.stack(style_input.split(2, dim=1), dim=1)[:,:,1,:] # 20 x 64 x 2
         style_input = torch.permute(style_input, (1, 0, 2))  # 64 x 20 x 2
@@ -90,7 +91,6 @@ class SimpleStyleEncoder(nn.Module):
 
         # MLP
         style_seq = self.encoder(style_input)
-
         # apply reduction without sequences / within batch if needed
         batch_style = style_seq.mean(dim=0).unsqueeze(dim=0)
 

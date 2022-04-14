@@ -1,15 +1,16 @@
 #!/bin/bash -l
-#SBATCH --job-name=evaluate-vanilla
+#SBATCH --job-name=irm-train-dual
 #SBATCH --nodes=1
 #SBATCH --chdir /home/ckli/causal_original/style/
-#SBATCH --mem=90G
+#SBATCH --mem=300G
 #SBATCH --gres=gpu:1
 #SBATCH --account=vita
-#SBATCH --time=16:00:00
+#SBATCH --time=26:00:00
 #SBATCH --cpus-per-task=20
-#SBATCH --output eval-vanilla.out
+#SBATCH --output train-irm-dual.out
 
 source ~/.bashrc
 conda activate motion
 
-bash scripts/evaluate_vanilla.sh
+
+bash scripts/train_irm_dual_style.sh

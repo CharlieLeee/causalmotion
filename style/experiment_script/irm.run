@@ -5,7 +5,7 @@
 #SBATCH --mem=300G
 #SBATCH --gres=gpu:1
 #SBATCH --account=vita
-#SBATCH --time=16:00:00
+#SBATCH --time=26:00:00
 #SBATCH --cpus-per-task=20
 #SBATCH --output train-irm.out
 

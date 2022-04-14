@@ -12,5 +12,4 @@
 source ~/.bashrc
 conda activate motion
 
-bash scripts/evaluate_pretrain.sh
-bash scripts/extract_pretrain.sh
+bash scripts/evaluate_pretrain_rule.sh

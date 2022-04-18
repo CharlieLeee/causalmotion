@@ -6,7 +6,7 @@ exp='pretrain'
 
 dataset='synthetic_lr_v2' # 2. Set dataset
 f_envs='0.1-0.3-0.5'
-DATA="--dataset_name $dataset --filter_envs $f_envs --reduceall 100"
+DATA="--dataset_name $dataset --filter_envs $f_envs --reduceall 9000"
 DIR="--tfdir runs/$dataset/$exp/$irm"
 bs=64
 
@@ -42,7 +42,7 @@ e='0-0-100-50-20-300'
 irm=1.0 # 3. Set IRM weight
 TRAINING="--num_epochs $e --batch_size $bs --irm $irm"
 
-for seed in 1 #2 3 4
+for seed in 1 2 3 4
 do  
     CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed &
 done

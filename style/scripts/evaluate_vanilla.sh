@@ -1,7 +1,7 @@
 # PRETRAIN MODELS (v4 MLP)
 
 GPU=0 # 0. Set GPU
-EVALUATION="--metrics accuracy"
+EVALUATION="--metrics qualitative"
 exp="pretrain"
 dataset="synthetic_lr_v2" # 1. Set Dataset
 dset_type="test"
@@ -12,7 +12,7 @@ reduceall=9000
 
 step="P3" 
 epochs_string='0-0-100-0-0-0'
-epoch=100 
+epoch=99 
 irm=0.0 # 2. Set IRM
 for f_envs in "0.1" "0.2" "0.3" "0.4" "0.5" "0.6" "0.7" 
 do

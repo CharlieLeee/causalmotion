@@ -92,6 +92,7 @@ def visualize(args, loader, generator):
                 obs_traj_rel,
                 _,
                 seq_start_end,
+                _, _
             ) = batch
 
             for k in range(args.best_k):

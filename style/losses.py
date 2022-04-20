@@ -2,7 +2,9 @@ import torch
 import torch.nn as nn
 from utils import l2_loss, relative_to_abs, from_abs_to_social
 from torch.nn.functional import cross_entropy
-
+from datetime import datetime
+import os
+import numpy as np
 
 class SupConLoss(nn.Module):
     """Supervised Contrastive Learning: https://arxiv.org/pdf/2004.11362.pdf.
@@ -100,7 +102,7 @@ class CustomLoss(nn.Module):
         super(CustomLoss, self).__init__()
         self.contrastive_loss = SupConLoss()
     
-    def forward(self, model, train_iter, pretrain_iter, train_dataset, pretrain_dataset, training_step, args, stage):
+    def forward(self, model, train_iter, pretrain_iter, train_dataset, pretrain_dataset, training_step, args, stage, epoch):
         assert(training_step in ['P3', 'P4', 'P5', 'P6'])
         batch_loss = []
         env_embeddings, label_embeddings = [], [] # to store the low dim feat space for contrastive style loss, and their labels
@@ -152,6 +154,15 @@ class CustomLoss(nn.Module):
 
             batch_loss.append(single_env_loss)
 
+        # save embeddings for visualization
+        if args.visualize_embedding:
+            filename = 'embedding_vis/seed_' + str(args.seed) + training_step + 'epoch_' + str(epoch) + datetime.now().strftime("%Y_%m_%d-%I:%M:%S")
+            embed_dict = {
+                'env_embeddings' : env_embeddings,
+                'label_embeddings' : label_embeddings,
+                'pred_embeddings' : pred_embeddings
+            }
+            np.save('{}.npy'.format(filename), embed_dict)
 
         # COMPUTE THE TOTAL LOSS ON ALL ENVIRONMENTS
         loss = torch.zeros(()).cuda()

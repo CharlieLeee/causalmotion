@@ -134,6 +134,7 @@ style/runs/*
 style/results/*
 style/datasets/*
 *.json
+style/embedding_vis/*
 
 # Slurm log
 *.out

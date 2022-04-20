@@ -40,6 +40,9 @@ def main(args):
 
     ref_pictures = [[b.cuda() for b in next(iter(loader))] for loader in val_loaders]
 
+    if args.visualize_embedding and not os.path.exists('embedding_vis'):
+        os.makedirs('embedding_vis')
+    
     # If finetuning, we need to load the pretrain datasets for style contrastive loss
     pretrain_loaders = None
     if args.filter_envs_pretrain:
@@ -295,7 +298,7 @@ def train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, t
         for opt in optimizers.values(): opt.zero_grad()
 
         # compute loss (which depends on the training step)
-        loss, ped_tot = criterion(model, train_iter, pretrain_iter, train_dataset, pretrain_dataset, training_step, args, stage)
+        loss, ped_tot = criterion(model, train_iter, pretrain_iter, train_dataset, pretrain_dataset, training_step, args, stage, epoch)
         
         # backpropagate if needed
         if stage == 'training' and update:

@@ -1,0 +1,15 @@
+#!/bin/bash -l
+#SBATCH --job-name=eval_finetune
+#SBATCH --nodes=1
+#SBATCH --chdir /home/ckli/causal_original/style/
+#SBATCH --mem=300G
+#SBATCH --gres=gpu:1
+#SBATCH --account=vita
+#SBATCH --time=16:00:00
+#SBATCH --cpus-per-task=20
+#SBATCH --output eval_finetune.out
+
+source ~/.bashrc
+conda activate motion
+
+bash scripts/evaluate_finetune.sh

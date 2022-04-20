@@ -20,14 +20,23 @@ def evaluate(args, loaders, model):
         ade_tot_meter, fde_tot_meter = AverageMeter("ADE", ":.4f"), AverageMeter("FDE", ":.4f")
         for loader in loaders:
             #ade_meter, fde_meter = AverageMeter("ADE", ":.4f"), AverageMeter("FDE", ":.4f")
-            for _, batch in enumerate(loader):
+            for bidx, batch in enumerate(loader):
                 batch = [tensor.cuda() for tensor in batch]
                 (obs_traj, fut_traj, _, _, _, _, _) = batch
 
                 step = args.resume.split('/')[3]
 
-                pred_fut_traj_rel = model(batch, step)
-
+                pred_fut_traj_rel = model(batch, step)[0] if args.visualize_embedding else model(batch, step)
+                if args.visualize_embedding:
+                    _, low_dim = model(batch, 'P6')
+                    embed_saving = low_dim.cpu().detach().numpy()
+                    filename = str(bidx) + args.filter_envs
+                    embed_dict = {
+                        'env_embeddings' : embed_saving,
+                        'label' : np.array([args.filter_envs]),
+                    }
+                    np.save('eval_embedding/' + '{}.npy'.format(filename), embed_dict)
+                    
                 pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
                 
                 ade_, fde_ = cal_ade_fde(fut_traj, pred_fut_traj)

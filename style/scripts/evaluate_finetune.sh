@@ -3,7 +3,7 @@ GPU=0 # 1. Set GPU
 
 EVALUATION='--metrics accuracy'
 f_envs='0.6'
-dataset='v4'
+dataset='synthetic_lr_v2'
 bs=64
 DATA="--dataset_name $dataset --filter_envs $f_envs --batch_size $bs"
 

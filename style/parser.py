@@ -106,5 +106,5 @@ def get_training_parser():
     parser.add_argument("--complexdecoder", default=True, type=bool, help='')
     parser.add_argument("--unbiased", default=True, type=bool, help='')
 
-
+    parser.add_argument("--visualize_embedding", action='store_true', default=False, help='save embedding for visualization') 
     return parser

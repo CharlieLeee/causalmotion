@@ -134,6 +134,12 @@ style/runs/*
 style/results/*
 style/datasets/*
 *.json
+style/embedding_vis/*
+style/eval_embedding/*
+style/eval_embedding
 
 # Slurm log
 *.out
+
+# zip 
+*.zip

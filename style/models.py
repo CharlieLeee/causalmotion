@@ -229,6 +229,7 @@ class CausalMotionModel(nn.Module):
             NUMBER_PERSONS,
             style_input_size=self.style_encoder.style_dim,
         )
+        self.visualize_embedding = args.visualize_embedding
 
     def forward(self, batch, training_step):
         assert (training_step in ['P3', 'P4', 'P5', 'P6'])
@@ -253,7 +254,7 @@ class CausalMotionModel(nn.Module):
         # compute prediction
         output = self.decoder(latent_content_space, style_feat_space=style_encoding)
 
-        if training_step == 'P6' and self.training:
+        if training_step == 'P6' and (self.training or self.visualize_embedding):
             return output, low_dim  # need the low_dim to keep training contrastive loss
         else:
             return output

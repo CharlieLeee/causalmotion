@@ -5,7 +5,7 @@ GPU=0 # 0. Set GPU
 # data
 filter_envs='0.6' # 1. Set env(s) to filter for training
 filter_envs_pretrain='0.1-0.3-0.5'
-dataset='v4'
+dataset='synthetic_lr_v2'
 DATA="--dataset_name $dataset --filter_envs $filter_envs --filter_envs_pretrain $filter_envs_pretrain"
 bs=64
 
@@ -33,7 +33,7 @@ do
 
         for reduce in 64 128 192 256 320
         do
-            CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $MODEL $DIR --reduce $reduce --original_seed $seed --resume "models/$dataset/pretrain/$step/$irm/SSE_data_${dataset}_irm[${irm}]_filter_envs[0.1-0.3-0.5]_ep_[$epoch_string]_seed_${seed}_tstep_${step}_epoch_${epoch}_reduceall[$oldreduceall]_relsocial[True]stylefs[all].pth.tar" &
+            CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $MODEL $DIR --reduce $reduce --original_seed $seed --resume "models/$dataset/pretrain/$step/$irm/SSE_data_${dataset}_irm[${irm}]_filter_envs[0.1-0.3-0.5]_ep_[$epoch_string]_seed_${seed}_tstep_${step}_epoch_${epoch}_reduceall[$oldreduceall]_relsocial[True]stylefs[all].pth.tar" 
         done
         CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $MODEL $DIR --reduce 384 --original_seed $seed --resume "models/$dataset/pretrain/$step/$irm/SSE_data_${dataset}_irm[${irm}]_filter_envs[0.1-0.3-0.5]_ep_[$epoch_string]_seed_${seed}_tstep_${step}_epoch_${epoch}_reduceall[$oldreduceall]_relsocial[True]stylefs[all].pth.tar"
     done

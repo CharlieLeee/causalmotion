@@ -30,7 +30,7 @@ def evaluate(args, loaders, model):
                 if args.visualize_embedding:
                     _, low_dim = model(batch, 'P6')
                     embed_saving = low_dim.cpu().detach().numpy()
-                    filename = str(bidx) + args.filter_envs
+                    filename = args.resume + str(bidx) + args.filter_envs
                     embed_dict = {
                         'env_embeddings' : embed_saving,
                         'label' : np.array([args.filter_envs]),

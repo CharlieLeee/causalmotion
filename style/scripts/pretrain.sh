@@ -26,12 +26,8 @@ bs=64
 
 ### Vanilla
 e='0-0-2000-0-0-0'
-irm=1.0 # 3. Set IRM weight
-<<<<<<< HEAD
-TRAINING="--num_epochs $e --batch_size $bs --counter false --irm $irm" # 4. Set Counter
-=======
-TRAINING="--num_epochs $e --batch_size $bs --counter false" # 4. Set Counter
->>>>>>> 410a54411f615f12375dfcdf8a71d2de86907c1d
+irm=0.0 # 3. Set IRM weight
+TRAINING="--num_epochs $e --batch_size $bs --counter false --irm $irm --lrstgat 5e-3" # 4. Set Counter
 
 for seed in 1 2 3 4
 do  

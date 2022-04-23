@@ -12,13 +12,8 @@ reduceall=9000
 
 step="P3" 
 epochs_string='0-0-2000-0-0-0'
-<<<<<<< HEAD
-epoch=570
-irm=1.0 # 2. Set IRM
-=======
-epoch=1900
+epoch=900
 irm=0.0 # 2. Set IRM
->>>>>>> 410a54411f615f12375dfcdf8a71d2de86907c1d
 for f_envs in "0.1" "0.2" "0.3" "0.4" "0.5" "0.6" "0.7" 
 do
     DATA="--dataset_name $dataset --filter_envs $f_envs --batch_size $bs --dset_type $dset_type"

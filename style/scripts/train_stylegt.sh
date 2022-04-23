@@ -25,7 +25,7 @@ bs=64
 ## Method (uncomment the method of choice)
 
 ### Vanilla
-e='0-0-1-100-0-0'
+e='0-0-0-100-0-0'
 irm=0.0 # 3. Set IRM weight
 TRAINING="--num_epochs $e --batch_size $bs --counter false --irm $irm --lrstgat 5e-3 --gt_style" # 4. Set Counter
 
@@ -33,4 +33,4 @@ for seed in 1 #2 3 4
 do  
     CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed 
 done
-CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed 5
+#CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed 5

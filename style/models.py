@@ -248,7 +248,7 @@ class CausalMotionModel(nn.Module):
         assert (training_step in ['P3', 'P4', 'P5', 'P6'])
 
         (obj_traj, _, _, _, _, style_input, _) = batch
-        if gt_style == None and  self.args.gt_style and training_step=='P4':
+        if gt_style == None and self.args.gt_style and training_step=='P4':
             raise ValueError('The gt style is not provided')
         # compute only style and classify
         if training_step == 'P4':
@@ -256,7 +256,6 @@ class CausalMotionModel(nn.Module):
                 if self.args.gt_style:
                     style_embedding = self.gt_encoder(gt_style)
                     latent_content_space = self.inv_encoder(obj_traj)
-                    print('shapes!!!', style_embedding.shape, latent_content_space.shape)
                     output = self.decoder(latent_content_space, style_feat_space=style_embedding)
                     return output
                 else:

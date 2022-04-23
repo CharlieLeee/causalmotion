@@ -138,8 +138,12 @@ def main(args):
         'style' : torch.optim.Adam(
             [
                 {"params": model.style_encoder.encoder.parameters(), "lr": args.lrstyle},
-                {"params": model.gt_encoder.encoder.parameters(), "lr": args.lrstyle},
                 {"params": model.style_encoder.hat_classifier.parameters(), 'lr': args.lrclass},
+            ]
+        ),
+        'gt_style' : torch.optim.Adam(
+            [
+                {"params": model.gt_encoder.encoder.parameters(), "lr": args.lrstyle},
             ]
         ),
         'inv': torch.optim.Adam(
@@ -247,7 +251,10 @@ def main(args):
 
         with torch.no_grad():
             if training_step == 'P4':
-                metric = validate_er(model, valid_dataset, epoch, writer, stage='validation')
+                if args.gt_style:
+                    metric = validate_ade(model, valid_dataset, epoch, training_step, writer, stage='validation', rp=ref_pictures, args=args)
+                else:
+                    metric = validate_er(model, valid_dataset, epoch, writer, stage='validation')
             elif training_step in ['P3', 'P5', 'P6']:
                 metric = validate_ade(model, valid_dataset, epoch, training_step, writer, stage='validation', rp=ref_pictures, args=args)
 
@@ -314,7 +321,11 @@ def train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, t
             else:
                 if training_step in ['P1','P2','P3',              ]: optimizers['inv'].step()
                 if training_step in [          'P3',          'P6']: optimizers['decoder'].step()
-                if training_step in [               'P4',     'P6']: optimizers['style'].step()
+                if training_step in [               'P4',     'P6']: 
+                    if args.gt_style:
+                        optimizers['gt_style'].step()
+                    else:
+                        optimizers['style'].step()
                 if training_step in [                    'P5','P6']: optimizers['integ'].step()
             
         loss_meter.update(loss.item(), ped_tot.item())
@@ -344,11 +355,23 @@ def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, rp=N
             for batch_idx, batch in enumerate(loader):
                 batch = [tensor.cuda() for tensor in batch]
                 (obs_traj, fut_traj, _, _, _, _, _) = batch
-                if training_step<='P3': ts='P3'
-                else: ts='P6'
-                pred_fut_traj_rel = model(batch, ts)
+                
+                # if use ground truth model
+                if args.gt_style and training_step == 'P4':
+                    print('Loader name!!!: ', loader_name)
+                    radius = float(loader_name.split('_')[7])
+                    rule = 1. if 'True_clockwise' in loader_name else -1.
+                    style_embed = torch.tensor([radius, rule]).cuda()
+                    pred_fut_traj_rel = model(batch, 'P4', style_embed)
+                    print('batch.size!!', batch.size)
+                else:   
+                    if training_step<='P3': ts='P3'
+                    else: ts='P6'
+                    pred_fut_traj_rel = model(batch, ts)
 
                 # from relative path to absolute path
+                print('pred_fut_traj_rel.shape', pred_fut_traj_rel.shape)
+                print('obs_traj[-1, :, :2].shape', obs_traj[-1, :, :2].shape)
                 pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
 
                 # compute ADE and FDE metrics

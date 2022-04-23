@@ -130,6 +130,7 @@ class CustomLoss(nn.Module):
                     print('batch_size: ', batch[0].shape[1])
                     style_embed = torch.tensor([radius, rule]).cuda()
                     fut_pred_rel = model(batch, 'P4', style_embed)
+                    print('fut_pred_rel in P4', fut_pred_rel.shape)
                 else:
                     low_dim = model(batch, 'P4')
                     env_embeddings.append(low_dim)
@@ -145,6 +146,7 @@ class CustomLoss(nn.Module):
 
             else:
                 fut_pred_rel = model(batch, training_step)
+                print('fut_pred_rel in P3', fut_pred_rel.shape)
 
             # compute loss between output and future
             l2_loss_rel = torch.stack([
@@ -183,7 +185,12 @@ class CustomLoss(nn.Module):
         if training_step ==  'P3' and args.vrex:
             loss += batch_loss.var() * args.vrex
         
-
+        # gt_style
+        if args.gt_style and training_step == 'P4':
+            batch_loss = torch.stack(batch_loss)
+            loss += batch_loss.sum()
+        
+        
         # style contrastive loss
         if stage=='training' and ((training_step == 'P4' and not args.gt_style) or (training_step == 'P6' and args.contrastive)):
             

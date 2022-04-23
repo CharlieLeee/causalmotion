@@ -1,0 +1,16 @@
+#!/bin/bash -l
+#SBATCH --job-name=vanilla-gt-style
+#SBATCH --nodes=1
+#SBATCH --chdir /home/ckli/causal_original/style/
+#SBATCH --mem=200G
+#SBATCH --gres=gpu:1
+#SBATCH --account=vita
+#SBATCH --time=16:00:00
+#SBATCH --cpus-per-task=20
+#SBATCH --output vanilla-gt-style.out
+
+source ~/.bashrc
+conda activate motion
+
+
+bash scripts/train_stylegt.sh

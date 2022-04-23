@@ -113,6 +113,8 @@ class CustomLoss(nn.Module):
         for env_iter, env_name in zip(train_iter, train_dataset['names']):
             try:
                 batch = next(env_iter)
+                radius = float(env_name.split('_')[7])
+                rule = 1. if 'True_clockwise' in env_name else -1.
             except StopIteration:
                 raise RuntimeError()
 
@@ -124,13 +126,18 @@ class CustomLoss(nn.Module):
 
             # loss of style encoder only
             if training_step == 'P4':
-                low_dim = model(batch, 'P4')
-                env_embeddings.append(low_dim)
-                label_embeddings.append(torch.tensor(train_dataset['labels'][env_name]))
-                continue
+                if args.gt_style:
+                    print('batch_size: ', batch[0].shape[1])
+                    style_embed = torch.tensor([radius, rule]).cuda()
+                    fut_pred_rel = model(batch, 'P4', style_embed)
+                else:
+                    low_dim = model(batch, 'P4')
+                    env_embeddings.append(low_dim)
+                    label_embeddings.append(torch.tensor(train_dataset['labels'][env_name]))
+                    continue
 
             # compute model output
-            if training_step == 'P6':
+            elif training_step == 'P6':
                 fut_pred_rel, low_dim = model(batch, training_step)
                 env_embeddings.append(low_dim)
                 label_embeddings.append(torch.tensor(train_dataset['labels'][env_name]))
@@ -178,7 +185,7 @@ class CustomLoss(nn.Module):
         
 
         # style contrastive loss
-        if stage=='training' and (training_step == 'P4' or (training_step == 'P6' and args.contrastive)):
+        if stage=='training' and ((training_step == 'P4' and not args.gt_style) or (training_step == 'P6' and args.contrastive)):
             
             # if finetuning, need to add the low dim latent spaces of pretraining environments
             if args.finetune != '' and pretrain_iter and pretrain_dataset and training_step == 'P6' and args.styleconsistency == 0:
@@ -188,6 +195,7 @@ class CustomLoss(nn.Module):
 
             # set to contrastive value if both loss (step 6), to 1 if this is the only loss (step 4)
             factor = args.contrastive if training_step == 'P6' else 1 
+            
             loss += self.contrastive_loss(torch.stack(env_embeddings), torch.stack(label_embeddings)) * factor
         
 

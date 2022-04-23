@@ -1,3 +1,4 @@
+from multiprocessing.sharedctypes import Value
 import torch
 import torch.nn as nn
 from tqdm import tqdm
@@ -25,6 +26,18 @@ class ConcatBlock(nn.Module):
         out = self.perceptron(content_and_style)
         return out + x
 
+class GTEncoder(nn.Module):
+    def __init__(self, args):
+        super().__init__()
+        # style encoder
+        self.encoder = nn.Sequential(
+            nn.Linear(2, 16),
+            nn.ReLU(),
+            nn.Linear(16, 8)
+        )
+        self.args = args
+    def forward(self, x):
+        return self.encoder(x)
 
 class SimpleStyleEncoder(nn.Module):
     def __init__(self, args):
@@ -218,10 +231,10 @@ class CausalMotionModel(nn.Module):
         super(CausalMotionModel, self).__init__()
 
         latent_space_size = 8
-
+        self.args = args
         self.inv_encoder = SimpleEncoder(args.obs_len, latent_space_size, NUMBER_PERSONS)
         self.style_encoder = SimpleStyleEncoder(args)
-
+        self.gt_encoder = GTEncoder(args)
         self.decoder = SimpleDecoder(
             args.obs_len,
             args.fut_len,
@@ -231,15 +244,23 @@ class CausalMotionModel(nn.Module):
         )
         self.visualize_embedding = args.visualize_embedding
 
-    def forward(self, batch, training_step):
+    def forward(self, batch, training_step, gt_style=None):
         assert (training_step in ['P3', 'P4', 'P5', 'P6'])
 
         (obj_traj, _, _, _, _, style_input, _) = batch
-
+        if gt_style == None and  self.args.gt_style and training_step=='P4':
+            raise ValueError('The gt style is not provided')
         # compute only style and classify
         if training_step == 'P4':
             if self.training:
-                return self.style_encoder(style_input, 'low')
+                if self.args.gt_style:
+                    style_embedding = self.gt_encoder(gt_style)
+                    latent_content_space = self.inv_encoder(obj_traj)
+                    print('shapes!!!', style_embedding.shape, latent_content_space.shape)
+                    output = self.decoder(latent_content_space, style_feat_space=style_embedding)
+                    return output
+                else:
+                    return self.style_encoder(style_input, 'low')
             else:
                 return self.style_encoder(style_input, 'class')
 

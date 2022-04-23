@@ -117,9 +117,9 @@ def main(args):
     else: num_batches_valo=0
 
     # bring different dataset all together for simplicity of the next functions
-    train_dataset = {'loaders': train_loaders, 'names': train_envs_name, 'labels': train_labels, 'num_batches': num_batches_train}
-    valid_dataset = {'loaders': val_loaders, 'names': val_envs_name, 'labels': val_labels, 'num_batches': num_batches_val}
-    valid_dataseto = {'loaders': val_loaderso, 'names': val_envs_nameo, 'labels': val_labelso, 'num_batches': num_batches_valo}
+    train_dataset = {'loaders': train_loaders, 'names': train_envs_name, 'labels': train_labels, 'num_batches': num_batches_train, 'all_train_labels': all_train_labels}
+    valid_dataset = {'loaders': val_loaders, 'names': val_envs_name, 'labels': val_labels, 'num_batches': num_batches_val, 'all_valid_labels': all_valid_labels}
+    valid_dataseto = {'loaders': val_loaderso, 'names': val_envs_nameo, 'labels': val_labelso, 'num_batches': num_batches_valo, 'all_valid_labelso': all_valid_labelso}
     if args.filter_envs_pretrain:
         pretrain_dataset = {'loaders': pretrain_loaders, 'names': pretrain_envs_name, 'labels': pretrain_labels, 'num_batches': num_batches_pretrain}
     else:
@@ -138,6 +138,7 @@ def main(args):
         'style' : torch.optim.Adam(
             [
                 {"params": model.style_encoder.encoder.parameters(), "lr": args.lrstyle},
+                {"params": model.gt_encoder.encoder.parameters(), "lr": args.lrstyle},
                 {"params": model.style_encoder.hat_classifier.parameters(), 'lr': args.lrclass},
             ]
         ),

@@ -16,16 +16,16 @@ def get_training_parser():
     parser.add_argument("--model_dir", default="", help="Directory containing logging file")
 
     # dataset
-    parser.add_argument("--dataset_name", default="synthetic", type=str)
+    parser.add_argument("--dataset_name", default="synthetic_lr_v2", type=str)
     parser.add_argument("--delim", default="\t")
     parser.add_argument("--obs_len", default=8, type=int)
     parser.add_argument("--fut_len", default=12, type=int)
     parser.add_argument("--skip", default=1, type=int)
     parser.add_argument("--n_coordinates", type=int, default=2, help="Number of coordinates")
-    parser.add_argument("--filter_envs", type=str, default="", help="Filter only certain environments (i.e 0.1-0.3-0.5)")
+    parser.add_argument("--filter_envs", type=str, default="0.1-0.3-0.5", help="Filter only certain environments (i.e 0.1-0.3-0.5)")
     parser.add_argument("--filter_envs_pretrain", type=str, default="", help="Say which env were used during pretraining (for contrastive loss) (i.e 0.1-0.3-0.5)")
     parser.add_argument('--reduce', default=0, type=int)
-    parser.add_argument('--reduceall', default=0, type=int)
+    parser.add_argument('--reduceall', default=30, type=int)
     parser.add_argument('--testonly', default=0, type=int, help='Only test model. 0 -> training, 1 -> testing, 3 -> testing with refinement') # 0 is normal train, 1 is test, 2 is test with k, 3 is ttr
     # randomness
     parser.add_argument("--seed", type=int, default=72, help="Random seed")
@@ -57,7 +57,7 @@ def get_training_parser():
     parser.add_argument("--gpu_num", default="0", type=str)
     # training
     parser.add_argument("--best_k", default=1, type=int)
-    parser.add_argument("--batch_size", default='', type=str)
+    parser.add_argument("--batch_size", default='64', type=str)
     parser.add_argument("--batch_method", default='het', type=str,
                         help='Use Homogeneous (hom), Heterogeneous (het) or alternated homogeneous (alt) batches during training')
     parser.add_argument("--shuffle", default=True, type=bool)
@@ -73,7 +73,7 @@ def get_training_parser():
 
     # general training
     parser.add_argument("--finetune", default="", type=str)
-    parser.add_argument("--num_epochs", default='5-5-10', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
+    parser.add_argument("--num_epochs", default='0-0-0-100-0-0', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
     parser.add_argument("--resume", default="", type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
     parser.add_argument("--batch_hetero", default=True, type=bool, help='Use Homogeneous/Heterogeneous batches during training')
     parser.add_argument("--tfdir", default='runs', type=str)
@@ -85,7 +85,7 @@ def get_training_parser():
 
     # learning rates
     parser.add_argument("--lrclass", default=1e-2, type=float, help="initial learning rate for style classifier optimizer")
-    parser.add_argument("--lrstgat", default=1e-3, type=float, help="initial learning rate for stgat optimizer")
+    parser.add_argument("--lrstgat", default=5e-3, type=float, help="initial learning rate for stgat optimizer")
     parser.add_argument("--lrstyle", default=5e-4, type=float, help="initial learning rate for style encoder optimizer")
     parser.add_argument('--lrinteg', default=0.01, type=float,  help="initial learning rate for the integrator optimizer")
    
@@ -107,5 +107,5 @@ def get_training_parser():
     parser.add_argument("--unbiased", default=True, type=bool, help='')
 
     parser.add_argument("--visualize_embedding", action='store_true', default=False, help='save embedding for visualization') 
-    parser.add_argument("--gt_style", action='store_true', default=False, help='use ground truth style as ') 
+    parser.add_argument("--gt_style", action='store_true', default=True, help='use ground truth style as ') 
     return parser

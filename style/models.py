@@ -261,7 +261,13 @@ class CausalMotionModel(nn.Module):
                 else:
                     return self.style_encoder(style_input, 'low')
             else:
-                return self.style_encoder(style_input, 'class')
+                if self.args.gt_style:
+                    style_embedding = self.gt_encoder(gt_style)
+                    latent_content_space = self.inv_encoder(obj_traj)
+                    output = self.decoder(latent_content_space, style_feat_space=style_embedding)
+                    return output
+                else:
+                    return self.style_encoder(style_input, 'class')
 
         # compute invariants
         latent_content_space = self.inv_encoder(obj_traj)

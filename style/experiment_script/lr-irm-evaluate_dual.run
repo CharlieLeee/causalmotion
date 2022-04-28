@@ -2,7 +2,7 @@
 #SBATCH --job-name=irm-dualstyle-evaluate
 #SBATCH --nodes=1
 #SBATCH --chdir /home/ckli/causal_original/style/
-#SBATCH --mem=90G
+#SBATCH --mem=30G
 #SBATCH --gres=gpu:1
 #SBATCH --account=vita
 #SBATCH --time=16:00:00

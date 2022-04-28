@@ -127,7 +127,6 @@ class CustomLoss(nn.Module):
             # loss of style encoder only
             if training_step == 'P4':
                 if args.gt_style:
-                    print('batch_size: ', batch[0].shape[1])
                     style_embed = torch.tensor([radius, rule]).cuda()
                     fut_pred_rel = model(batch, 'P4', style_embed)
                 else:

@@ -323,6 +323,8 @@ def train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, t
                 if training_step in [          'P3',          'P6']: optimizers['decoder'].step()
                 if training_step in [               'P4',     'P6']: 
                     if args.gt_style:
+                        optimizers['inv'].step()
+                        optimizers['decoder'].step()
                         optimizers['gt_style'].step()
                     else:
                         optimizers['style'].step()

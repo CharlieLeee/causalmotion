@@ -30,12 +30,12 @@ class GTEncoder(nn.Module):
     def __init__(self, args):
         super().__init__()
         # style encoder
-        self.encoder = nn.Sequential(
-            nn.Linear(2, 16),
-            nn.ReLU(),
-            nn.Linear(16, 8)
-        )
         self.args = args
+        self.encoder = nn.Sequential(
+            nn.Linear(2, args.gt_encoder),
+            nn.ReLU(),
+            nn.Linear(args.gt_encoder, 8)
+        )
     def forward(self, x):
         return self.encoder(x)
 
@@ -281,6 +281,7 @@ class CausalMotionModel(nn.Module):
         output = self.decoder(latent_content_space, style_feat_space=style_encoding)
 
         if training_step == 'P6' and (self.training or self.visualize_embedding):
+            low_dim, style_encoding = self.style_encoder(style_input, 'both')
             return output, low_dim  # need the low_dim to keep training contrastive loss
         else:
             return output

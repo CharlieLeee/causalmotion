@@ -12,7 +12,7 @@ reduceall=9000
 
 step="P3" 
 epochs_string='0-0-2000-0-0-0'
-epoch=900
+epoch=1280
 irm=0.0 # 2. Set IRM
 for f_envs in "0.1" "0.2" "0.3" "0.4" "0.5" "0.6" "0.7" 
 do

@@ -2,12 +2,12 @@
 #SBATCH --job-name=finetune_dual
 #SBATCH --nodes=1
 #SBATCH --chdir /home/ckli/causal_original/style/
-#SBATCH --mem=300G
+#SBATCH --mem=90G
 #SBATCH --gres=gpu:1
 #SBATCH --account=vita
 #SBATCH --time=16:00:00
 #SBATCH --cpus-per-task=20
-#SBATCH --output finetune.out
+#SBATCH --output finetune_dual.out
 
 source ~/.bashrc
 conda activate motion

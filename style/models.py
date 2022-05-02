@@ -170,6 +170,7 @@ class SimpleDecoder(nn.Module):
             hidden_size,
             number_of_agents,
             style_input_size=None,
+            decoder_bottle=2
     ):
         super(SimpleDecoder, self).__init__()
 
@@ -182,15 +183,15 @@ class SimpleDecoder(nn.Module):
         self.noise_fixed = False
 
         self.mlp1 = nn.Sequential(
-            nn.Linear(hidden_size*2, 4* hidden_size),
+            nn.Linear(hidden_size*2, 2*decoder_bottle* hidden_size),
             nn.ReLU(),
-            nn.Linear(4* hidden_size, 4* hidden_size)
+            nn.Linear(2*decoder_bottle* hidden_size, 4* hidden_size)
         )
 
         self.mlp2 = nn.Sequential(
-            nn.Linear(4* hidden_size, number_of_agents*2*fut_len),
+            nn.Linear(4* hidden_size, number_of_agents*decoder_bottle*fut_len),
             nn.ReLU(),
-            nn.Linear(number_of_agents*2*fut_len, number_of_agents*2*fut_len)
+            nn.Linear(number_of_agents*decoder_bottle*fut_len, number_of_agents*2*fut_len)
         )
 
         self.number_of_agents = number_of_agents
@@ -240,6 +241,7 @@ class CausalMotionModel(nn.Module):
             latent_space_size,
             NUMBER_PERSONS,
             style_input_size=self.style_encoder.style_dim,
+            decoder_bottle=args.decoder_bottle
         )
         self.visualize_embedding = args.visualize_embedding
 

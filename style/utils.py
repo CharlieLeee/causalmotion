@@ -493,6 +493,7 @@ def save_all_model(args, model, optimizers, metric, epoch, training_step):
         'state_dicts': {
             'inv': model.inv_encoder.state_dict(),
             'style': model.style_encoder.state_dict(),
+            'gt_style': model.gt_encoder.state_dict(),
             'decoder': model.decoder.state_dict(),
             # 'decoder_solo': [
             #     model.decoder.pred_lstm_model.state_dict(), model.decoder.pred_hidden2pos.state_dict()
@@ -553,10 +554,19 @@ def load_all_model(args, model, optimizers):
             model.style_encoder.load_state_dict(models_checkpoint['style'])
             if optimizers != None: 
                 optimizers['style'].load_state_dict(checkpoint['optimizers']['style'])
-                update_lr(optimizers['style'], args.lrstyle)
+                update_lr(optimizers['style'], args.lrstyle)    
         except Exception:
             print('Styleinteg was wrongly chosen')
-
+            
+        # gt style encoder
+        # 'gt_style': model.gt_encoder.state_dict()    
+        try:
+            model.gt_encoder.load_state_dict(models_checkpoint['gt_style'])
+            if optimizers != None: 
+                optimizers['gt_style'].load_state_dict(checkpoint['optimizers']['gt_style'])
+                update_lr(optimizers['gt_style'], args.lrstyle)
+        except Exception:
+            print('ground truth style not found in the model')
 
         # integrator
         if args.newstyleinteg == '': # keep the curent style integrator

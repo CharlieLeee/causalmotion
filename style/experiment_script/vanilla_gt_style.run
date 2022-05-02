@@ -1,12 +1,14 @@
 #!/bin/bash -l
+#SBATCH --chdir /home/ckli/causal_original/style/
+#SBATCH --ntasks=1
 #SBATCH --job-name=vanilla-gt-style
 #SBATCH --nodes=1
-#SBATCH --chdir /home/ckli/causal_original/style/
-#SBATCH --mem=90G
+#SBATCH --reservation courses
+#SBATCH --account civil-459
+#SBATCH --mem=1G
 #SBATCH --gres=gpu:1
-#SBATCH --account=vita
-#SBATCH --time=48:00:00
-#SBATCH --cpus-per-task=20
+#SBATCH --time=1:00:00
+#SBATCH --cpus-per-task=1
 #SBATCH --output vanilla-gt-style.out
 
 source ~/.bashrc

@@ -348,7 +348,6 @@ def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, rp=N
 
     assert (stage in ['training', 'validation', 'validation_o'])
     ade_tot_meter, fde_tot_meter = AverageMeter("ADE", ":.4f"), AverageMeter("FDE", ":.4f")
-
     logging.info(f"- Computing ADE ({stage})")
     with torch.no_grad():
         for loader, loader_name in zip(valid_dataset['loaders'], valid_dataset['names']):
@@ -372,7 +371,8 @@ def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, rp=N
 
                 # from relative path to absolute path
                 pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
-
+                # visualize output
+                sceneplot()
                 # compute ADE and FDE metrics
                 ade_, fde_ = cal_ade_fde(fut_traj, pred_fut_traj)
                 ade_, fde_ = ade_ / (obs_traj.shape[1] * fut_traj.shape[0]), fde_ / (obs_traj.shape[1])

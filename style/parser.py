@@ -107,6 +107,9 @@ def get_training_parser():
     parser.add_argument("--unbiased", default=True, type=bool, help='')
 
     parser.add_argument("--visualize_embedding", action='store_true', default=False, help='save embedding for visualization') 
-    parser.add_argument("--gt_style", action='store_true', default=True, help='use ground truth style as ') 
+    parser.add_argument("--gt_style", action='store_true', default=False, help='use ground truth style as input') 
     parser.add_argument("--gt_encoder", default=16, type=int, help='hidden dim for encoder of gt')
+    parser.add_argument("--visualize_eval_out", action='store_true', default=False, help='visualize the evaluation output') 
+    parser.add_argument("--exp", default='pretrain', type=str)
+    
     return parser

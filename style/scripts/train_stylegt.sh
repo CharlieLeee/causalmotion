@@ -6,7 +6,7 @@ exp='gt_style_60_hidden_100_1900'
 
 dataset='synthetic_lr_v2' # 2. Set dataset
 f_envs='0.1-0.3-0.5'
-DATA="--dataset_name $dataset --filter_envs $f_envs --reduceall 9000"
+DATA="--dataset_name $dataset --filter_envs $f_envs --reduceall 2000"
 DIR="--tfdir runs/$dataset/$exp/$irm"
 bs=64
 
@@ -27,7 +27,7 @@ bs=64
 ### Vanilla
 e='0-0-100-1900-0-0'
 irm=0.0 # 3. Set IRM weight
-TRAINING="--num_epochs $e --batch_size $bs --counter false --irm $irm --lrstgat 3e-3 --gt_style --gt_encoder 60" # 4. Set Counter
+TRAINING="--num_epochs $e --batch_size $bs --counter false --irm $irm --exp $exp --lrstgat 1e-3 --gt_style --gt_encoder 60" # 4. Set Counter
 
 for seed in 1 2 3 4
 do  

@@ -26,7 +26,19 @@ def evaluate(args, loaders, model):
 
                 step = args.resume.split('/')[3]
                 
-                pred_fut_traj_rel = model(batch, step)[0] if args.visualize_embedding else model(batch, step)
+                if args.gt_style:
+                    # parse args.filter_envs. e.g. 0.7l
+                    # clockwise (l) is 1 ccw (r) is -1
+                    if 'r' in args.filter_envs:
+                        rule = -1.
+                        radius = args.filter_envs.replace('r', '')
+                    if 'l' in args.filter_envs:
+                        rule = 1. 
+                        radius = args.filter_envs.replace('l', '')
+                    style_embed = torch.tensor([radius, rule]).cuda()
+                    pred_fut_traj_rel = model(batch, 'P4', style_embed)
+                else:
+                    pred_fut_traj_rel = model(batch, step)[0] if args.visualize_embedding else model(batch, step)
                 if args.visualize_embedding:
                     _, low_dim = model(batch, 'P6')
                     embed_saving = low_dim.cpu().detach().numpy()

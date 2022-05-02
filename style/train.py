@@ -361,6 +361,7 @@ def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, rp=N
                 # if use ground truth model
                 if args.gt_style and training_step == 'P4':
                     radius = float(loader_name.split('_')[7])
+                    # clockwise is left hand traffic
                     rule = 1. if 'True_clockwise' in loader_name else -1.
                     style_embed = torch.tensor([radius, rule]).cuda()
                     pred_fut_traj_rel = model(batch, 'P4', style_embed)

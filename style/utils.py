@@ -5,6 +5,9 @@ from re import L
 import torch
 import numpy as np
 from loguru import logger
+import matplotlib
+import matplotlib.pyplot as plt
+
 NUMBER_PERSONS = 2
 NUMBER_COUPLES = 2
 
@@ -643,3 +646,42 @@ def from_abs_to_social(abs_coord):
         res.append(torch.stack(sub))
     res = torch.stack(res)
     return res
+
+def sceneplot(obsv_scene, pred_scene, gt_scene, figname='scene.png', lim=9.0, number=2, title=None):
+    """
+    Plot a scene
+    """
+    num_traj = min(pred_scene.shape[0], number)
+    obsv_frame = obsv_scene.shape[1]
+    pred_frame = pred_scene.shape[1]
+    gt_frame = gt_scene.shape[1]
+    cm_subsection = np.linspace(0.0, 1.0, num_traj)
+    colors = [matplotlib.cm.jet(x) for x in cm_subsection]
+
+    for i in range(num_traj):
+        for k in range(1, obsv_frame):
+            plt.plot(obsv_scene[i, k - 1:k + 1, 0], obsv_scene[i, k - 1:k + 1, 1],
+                     '-o', color=colors[i], alpha=1.0)
+
+        plt.plot([obsv_scene[i, -1, 0], pred_scene[i, 0, 0]], [obsv_scene[i, -1, 1], pred_scene[i, 0, 1]],
+                 '--', color=colors[i], alpha=1.0, linewidth=1.0)
+        for k in range(1, pred_frame):
+            alpha = 1.0 - k / pred_frame
+            width = (1.0 - alpha) * 24.0
+            plt.plot(pred_scene[i, k - 1:k + 1, 0], pred_scene[i, k - 1:k + 1, 1],
+                     '--', color=colors[i], alpha=alpha, linewidth=width)
+            plt.plot(gt_scene[i, k - 1:k + 1, 0], gt_scene[i, k - 1:k + 1, 1],
+                     '--', color=colors[i], alpha=1.0, linewidth=1.0)
+
+    xc = obsv_scene[:, -1, 0].mean()
+    yc = obsv_scene[:, -1, 1].mean()
+    plt.xlim(xc - lim, xc + lim)
+    plt.ylim(yc - lim / 2.0, yc + lim / 2.0)
+
+    if title is not None:
+        plt.title(title)
+    plt.gca().set_aspect('equal', adjustable='box')
+    plt.gca().get_xaxis().set_visible(False)
+    plt.gca().get_yaxis().set_visible(False)
+    plt.savefig(figname, bbox_inches='tight', pad_inches=.1)
+    plt.close()

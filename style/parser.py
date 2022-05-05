@@ -112,5 +112,7 @@ def get_training_parser():
     parser.add_argument("--decoder_bottle", default=2, type=int, help='decoder bottleneck width')
     parser.add_argument("--visualize_eval_out", action='store_true', default=False, help='visualize the evaluation output') 
     parser.add_argument("--exp", default='pretrain', type=str)
+    parser.add_argument("--visualize_prediction", action='store_true', default=False, help='save prediction during training') 
+    
     
     return parser

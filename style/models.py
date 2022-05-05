@@ -26,14 +26,15 @@ class ConcatBlock(nn.Module):
         return out + x
 
 class GTEncoder(nn.Module):
-    def __init__(self, args):
+    def __init__(self, args, style_dim=8):
         super().__init__()
         # style encoder
         self.args = args
+        self.style_dim = style_dim
         self.encoder = nn.Sequential(
             nn.Linear(2, args.gt_encoder),
             nn.ReLU(),
-            nn.Linear(args.gt_encoder, 8)
+            nn.Linear(args.gt_encoder, style_dim)
         )
     def forward(self, x):
         return self.encoder(x)
@@ -129,7 +130,8 @@ class SimpleEncoder(nn.Module):
             self,
             obs_len,
             hidden_size,
-            number_agents
+            number_agents,
+            bottle_width=4
     ):
         super(SimpleEncoder, self).__init__()
 
@@ -137,11 +139,11 @@ class SimpleEncoder(nn.Module):
         self.obs_len = obs_len
 
         self.mlp = nn.Sequential(
-            nn.Linear(obs_len*number_agents*2, hidden_size*4),
+            nn.Linear(obs_len*number_agents*2, hidden_size*bottle_width),
             nn.ReLU(),
-            nn.Linear(hidden_size*4, hidden_size*4),
+            nn.Linear(hidden_size*bottle_width, hidden_size*bottle_width),
             nn.ReLU(),
-            nn.Linear(hidden_size*4, hidden_size*2),
+            nn.Linear(hidden_size*bottle_width, hidden_size*2),
         )
 
 
@@ -185,11 +187,19 @@ class SimpleDecoder(nn.Module):
         self.mlp1 = nn.Sequential(
             nn.Linear(hidden_size*2, 2*decoder_bottle* hidden_size),
             nn.ReLU(),
+            nn.Linear(2*decoder_bottle* hidden_size, 2*decoder_bottle* hidden_size),
+            nn.ReLU(),
+            nn.Linear(2*decoder_bottle* hidden_size, 2*decoder_bottle* hidden_size),
+            nn.ReLU(),
             nn.Linear(2*decoder_bottle* hidden_size, 4* hidden_size)
         )
 
         self.mlp2 = nn.Sequential(
             nn.Linear(4* hidden_size, number_of_agents*decoder_bottle*fut_len),
+            nn.ReLU(),
+            nn.Linear(number_of_agents*decoder_bottle*fut_len, number_of_agents*decoder_bottle*fut_len),
+            nn.ReLU(),
+            nn.Linear(number_of_agents*decoder_bottle*fut_len, number_of_agents*decoder_bottle*fut_len),
             nn.ReLU(),
             nn.Linear(number_of_agents*decoder_bottle*fut_len, number_of_agents*2*fut_len)
         )
@@ -240,7 +250,7 @@ class CausalMotionModel(nn.Module):
             args.fut_len,
             latent_space_size,
             NUMBER_PERSONS,
-            style_input_size=self.style_encoder.style_dim,
+            style_input_size=self.gt_encoder.style_dim if args.gt_style else style_encoder.style_dim,
             decoder_bottle=args.decoder_bottle
         )
         self.visualize_embedding = args.visualize_embedding

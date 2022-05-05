@@ -43,6 +43,9 @@ def main(args):
     if args.visualize_embedding and not os.path.exists('embedding_vis'):
         os.makedirs('embedding_vis')
     
+    if args.visualize_prediction and not os.path.exists('images/visualization'):
+        os.makedirs('images/visualization')
+
     # If finetuning, we need to load the pretrain datasets for style contrastive loss
     pretrain_loaders = None
     if args.filter_envs_pretrain:
@@ -323,7 +326,7 @@ def train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, t
                 if training_step in [          'P3',          'P6']: optimizers['decoder'].step()
                 if training_step in [               'P4',     'P6']: 
                     if args.gt_style:
-                        optimizers['inv'].step()
+                        # optimizers['inv'].step()
                         optimizers['decoder'].step()
                         optimizers['gt_style'].step()
                     else:
@@ -355,7 +358,7 @@ def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, rp=N
 
             for batch_idx, batch in enumerate(loader):
                 batch = [tensor.cuda() for tensor in batch]
-                (obs_traj, fut_traj, _, _, _, _, _) = batch
+                (obs_traj, fut_traj, _, _, _, _, seq_start_end) = batch
                 
                 # if use ground truth model
                 if args.gt_style and training_step == 'P4':
@@ -371,13 +374,23 @@ def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, rp=N
 
                 # from relative path to absolute path
                 pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
+                
+                if args.visualize_prediction and batch_idx == 0 and (epoch % 30 == 0):
                 # visualize output
-                sceneplot()
-                # compute ADE and FDE metrics
-                ade_, fde_ = cal_ade_fde(fut_traj, pred_fut_traj)
-                ade_, fde_ = ade_ / (obs_traj.shape[1] * fut_traj.shape[0]), fde_ / (obs_traj.shape[1])
-                ade_meter.update(ade_, obs_traj.shape[1]), fde_meter.update(fde_, obs_traj.shape[1])
-                ade_tot_meter.update(ade_, obs_traj.shape[1]), fde_tot_meter.update(fde_, obs_traj.shape[1])
+                    idx_start, idx_end = seq_start_end[0][0], seq_start_end[0][1]
+                    obsv_scene = obs_traj[:, idx_start:idx_end, :]
+                    pred_scene = pred_fut_traj[:, idx_start:idx_end, :]
+                    gt_scene = fut_traj[:, idx_start:idx_end, :]
+                    # compute ADE and FDE metrics
+                    ade_, fde_ = cal_ade_fde(fut_traj, pred_fut_traj)
+                    ade_, fde_ = ade_ / (obs_traj.shape[1] * fut_traj.shape[0]), fde_ / (obs_traj.shape[1])
+                    ade_meter.update(ade_, obs_traj.shape[1]), fde_meter.update(fde_, obs_traj.shape[1])
+                    ade_tot_meter.update(ade_, obs_traj.shape[1]), fde_tot_meter.update(fde_, obs_traj.shape[1])
+                    figname = './images/visualization/epoch{}_{}_{:02d}_{:02d}_sample_ade{:.3f}_fde{:.3f}.png'.format(
+                        epoch, loader_name, 0, batch_idx, ade_, fde_)
+                    figtitle = 'ade{:.3f}_fde{:.3f}'.format(ade_, fde_)
+                    sceneplot(obsv_scene.permute(1, 0, 2).cpu().detach().numpy(), pred_scene.permute(1, 0, 2).cpu().detach().numpy(), 
+                                gt_scene.permute(1, 0, 2).cpu().detach().numpy(), figname=figname, title=figtitle)
 
             logging.info(f'\t\t ADE on {loader_name:<25} dataset:\t {ade_meter.avg}')
 

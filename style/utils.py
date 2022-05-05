@@ -664,22 +664,26 @@ def sceneplot(obsv_scene, pred_scene, gt_scene, figname='scene.png', lim=9.0, nu
                      '-o', color=colors[i], alpha=1.0)
 
         plt.plot([obsv_scene[i, -1, 0], pred_scene[i, 0, 0]], [obsv_scene[i, -1, 1], pred_scene[i, 0, 1]],
-                 '--', color=colors[i], alpha=1.0, linewidth=1.0)
-        for k in range(1, pred_frame):
+                 '--', color=colors[i], alpha=1.0, linewidth=1.0, label='observation')
+        for k in range(1, pred_frame-1):
             alpha = 1.0 - k / pred_frame
-            width = (1.0 - alpha) * 24.0
+            width = (1.0 - alpha) * 8.0
             plt.plot(pred_scene[i, k - 1:k + 1, 0], pred_scene[i, k - 1:k + 1, 1],
                      '--', color=colors[i], alpha=alpha, linewidth=width)
             plt.plot(gt_scene[i, k - 1:k + 1, 0], gt_scene[i, k - 1:k + 1, 1],
                      '--', color=colors[i], alpha=1.0, linewidth=1.0)
+        plt.plot([pred_scene[i, -2, 0], pred_scene[i, -1, 0]], [pred_scene[i, -2, 1], pred_scene[i, -1, 1]],
+                 '--', color=colors[i], alpha=0.5, linewidth=4.0, label='prediction')
+        plt.plot([gt_scene[i, -2, 0], gt_scene[i, -1, 0]], [gt_scene[i, -2, 1], gt_scene[i, -1, 1]],
+                 '--', color=colors[i], alpha=1.0, linewidth=1.0, label='ground truth')
 
     xc = obsv_scene[:, -1, 0].mean()
     yc = obsv_scene[:, -1, 1].mean()
     plt.xlim(xc - lim, xc + lim)
     plt.ylim(yc - lim / 2.0, yc + lim / 2.0)
-
     if title is not None:
         plt.title(title)
+    plt.legend()
     plt.gca().set_aspect('equal', adjustable='box')
     plt.gca().get_xaxis().set_visible(False)
     plt.gca().get_yaxis().set_visible(False)

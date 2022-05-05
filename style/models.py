@@ -141,8 +141,8 @@ class SimpleEncoder(nn.Module):
         self.mlp = nn.Sequential(
             nn.Linear(obs_len*number_agents*2, hidden_size*bottle_width),
             nn.ReLU(),
-            nn.Linear(hidden_size*bottle_width, hidden_size*bottle_width),
-            nn.ReLU(),
+            # nn.Linear(hidden_size*bottle_width, hidden_size*bottle_width),
+            # nn.ReLU(),
             nn.Linear(hidden_size*bottle_width, hidden_size*2),
         )
 
@@ -189,18 +189,18 @@ class SimpleDecoder(nn.Module):
             nn.ReLU(),
             nn.Linear(2*decoder_bottle* hidden_size, 2*decoder_bottle* hidden_size),
             nn.ReLU(),
-            nn.Linear(2*decoder_bottle* hidden_size, 2*decoder_bottle* hidden_size),
-            nn.ReLU(),
+            # nn.Linear(2*decoder_bottle* hidden_size, 2*decoder_bottle* hidden_size),
+            # nn.ReLU(),
             nn.Linear(2*decoder_bottle* hidden_size, 4* hidden_size)
         )
 
         self.mlp2 = nn.Sequential(
             nn.Linear(4* hidden_size, number_of_agents*decoder_bottle*fut_len),
             nn.ReLU(),
-            nn.Linear(number_of_agents*decoder_bottle*fut_len, number_of_agents*decoder_bottle*fut_len),
-            nn.ReLU(),
-            nn.Linear(number_of_agents*decoder_bottle*fut_len, number_of_agents*decoder_bottle*fut_len),
-            nn.ReLU(),
+            # nn.Linear(number_of_agents*decoder_bottle*fut_len, number_of_agents*decoder_bottle*fut_len),
+            # nn.ReLU(),
+            # nn.Linear(number_of_agents*decoder_bottle*fut_len, number_of_agents*decoder_bottle*fut_len),
+            # nn.ReLU(),
             nn.Linear(number_of_agents*decoder_bottle*fut_len, number_of_agents*2*fut_len)
         )
 

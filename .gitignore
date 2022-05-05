@@ -137,6 +137,7 @@ style/datasets/*
 style/embedding_vis/*
 style/eval_embedding/*
 style/eval_embedding
+style/images/visualization/*
 *.npy
 
 # Slurm log

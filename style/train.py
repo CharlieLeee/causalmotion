@@ -326,7 +326,7 @@ def train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, t
                 if training_step in [          'P3',          'P6']: optimizers['decoder'].step()
                 if training_step in [               'P4',     'P6']: 
                     if args.gt_style:
-                        # optimizers['inv'].step()
+                        optimizers['inv'].step()
                         optimizers['decoder'].step()
                         optimizers['gt_style'].step()
                     else:
@@ -379,7 +379,7 @@ def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, rp=N
                 ade_meter.update(ade_, obs_traj.shape[1]), fde_meter.update(fde_, obs_traj.shape[1])
                 ade_tot_meter.update(ade_, obs_traj.shape[1]), fde_tot_meter.update(fde_, obs_traj.shape[1])
                 
-                if args.visualize_prediction and batch_idx == 0 and (epoch % 30 == 0):
+                if args.visualize_prediction and batch_idx == 0 and (epoch % 2 == 0):
                 # visualize output
                     idx_start, idx_end = seq_start_end[0][0], seq_start_end[0][1]
                     obsv_scene = obs_traj[:, idx_start:idx_end, :]
@@ -388,7 +388,7 @@ def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, rp=N
                     # compute ADE and FDE metrics
                     figname = './images/visualization/epoch{}_{}_{:02d}_{:02d}_sample_ade{:.3f}_fde{:.3f}.png'.format(
                         epoch, loader_name, 0, batch_idx, ade_, fde_)
-                    figtitle = 'ade{:.3f}_fde{:.3f}'.format(ade_, fde_)
+                    figtitle = 'Epoch {} ADE{:.3f}  FDE{:.3f}'.format(epoch, ade_, fde_)
                     sceneplot(obsv_scene.permute(1, 0, 2).cpu().detach().numpy(), pred_scene.permute(1, 0, 2).cpu().detach().numpy(), 
                                 gt_scene.permute(1, 0, 2).cpu().detach().numpy(), figname=figname, title=figtitle)
 

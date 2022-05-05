@@ -33,14 +33,14 @@ for seed in 1 #2 3 4
 do
     for dbottle in 16 32 #8
     do
-        for lr in 5e-4 # 1e-3 3e-4  
+        for lr in  1e-3 #5e-4 # 1e-3 3e-4  
         do
             for enwidth in 8 #16 32 64
             do
                 exp="gt_style_${enwidth}_${train_len}_${dbottle}_${lr}_emb_two_stage"
                 echo $exp
                 DIR="--tfdir runs/${dataset}/${exp}/${irm}"
-                TRAINING="--num_epochs $e --batch_size $bs --counter false --irm $irm --exp $exp --lrstyle $lr --gt_style --gt_encoder $enwidth --decoder_bottle $dbottle" # 4. Set Counter
+                TRAINING="--num_epochs $e --batch_size $bs --counter false --irm $irm --exp $exp --lrstyle $lr --gt_style --gt_encoder $enwidth --decoder_bottle $dbottle --visualize_prediction" # 4. Set Counter
                 echo $DIR
                 CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed &
             done 

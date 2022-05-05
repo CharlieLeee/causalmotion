@@ -374,6 +374,10 @@ def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, rp=N
 
                 # from relative path to absolute path
                 pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
+                ade_, fde_ = cal_ade_fde(fut_traj, pred_fut_traj)
+                ade_, fde_ = ade_ / (obs_traj.shape[1] * fut_traj.shape[0]), fde_ / (obs_traj.shape[1])
+                ade_meter.update(ade_, obs_traj.shape[1]), fde_meter.update(fde_, obs_traj.shape[1])
+                ade_tot_meter.update(ade_, obs_traj.shape[1]), fde_tot_meter.update(fde_, obs_traj.shape[1])
                 
                 if args.visualize_prediction and batch_idx == 0 and (epoch % 30 == 0):
                 # visualize output
@@ -382,10 +386,6 @@ def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, rp=N
                     pred_scene = pred_fut_traj[:, idx_start:idx_end, :]
                     gt_scene = fut_traj[:, idx_start:idx_end, :]
                     # compute ADE and FDE metrics
-                    ade_, fde_ = cal_ade_fde(fut_traj, pred_fut_traj)
-                    ade_, fde_ = ade_ / (obs_traj.shape[1] * fut_traj.shape[0]), fde_ / (obs_traj.shape[1])
-                    ade_meter.update(ade_, obs_traj.shape[1]), fde_meter.update(fde_, obs_traj.shape[1])
-                    ade_tot_meter.update(ade_, obs_traj.shape[1]), fde_tot_meter.update(fde_, obs_traj.shape[1])
                     figname = './images/visualization/epoch{}_{}_{:02d}_{:02d}_sample_ade{:.3f}_fde{:.3f}.png'.format(
                         epoch, loader_name, 0, batch_idx, ade_, fde_)
                     figtitle = 'ade{:.3f}_fde{:.3f}'.format(ade_, fde_)
@@ -397,7 +397,9 @@ def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, rp=N
     logging.info(f"Average {stage}:\tADE  {ade_tot_meter.avg:.4f}\tFDE  {fde_tot_meter.avg:.4f}")
     # repoch = epoch if args.num_epochs[4] == 0 else epoch - 370
     repoch = epoch
-    if write: writer.add_scalar(f"ade/{stage}", ade_tot_meter.avg, repoch)
+    if write: 
+        writer.add_scalar(f"ade/{stage}", ade_tot_meter.avg, repoch)
+        writer.add_scalar(f"fde/{stage}", fde_tot_meter.avg, repoch)
 
     ## SAVE VISUALIZATIONS
     # if epoch % 1 == 0 and stage == 'validation':

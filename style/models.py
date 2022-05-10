@@ -141,8 +141,8 @@ class SimpleEncoder(nn.Module):
         self.mlp = nn.Sequential(
             nn.Linear(obs_len*number_agents*2, hidden_size*bottle_width),
             nn.ReLU(),
-            # nn.Linear(hidden_size*bottle_width, hidden_size*bottle_width),
-            # nn.ReLU(),
+            nn.Linear(hidden_size*bottle_width, hidden_size*bottle_width),
+            nn.ReLU(),
             nn.Linear(hidden_size*bottle_width, hidden_size*2),
         )
 
@@ -160,7 +160,36 @@ class SimpleEncoder(nn.Module):
         
         return encoded
 
+class NewEncoder(nn.Module):
+    def __init__(
+            self,
+            obs_len,
+            hidden_size,
+            number_agents,
+    ):
+        super(NewEncoder, self).__init__()
 
+        # num of frames per sequence
+        self.obs_len = obs_len
+
+        # input shape: num_agent*bz, 2*obs_len --> 2*bz, hidden_size
+        self.encode = nn.Sequential(
+            nn.Conv1d(2*obs_len, 16, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.Conv1d(16, hidden_size, kernel_size=5, stride=1, padding=2),
+            nn.ReLU(),
+            nn.Conv1d(hidden_size, hidden_size, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.Flatten(1)
+        )
+                
+    def forward(self, obs_traj_rel):
+        # input shape: obs_len, num_agent*bz, 2
+        out = torch.einsum('obd->bod', obs_traj_rel)
+        out = out.reshape(out.shape[0], -1, 1)
+        out = self.encode(out)
+        return out
+        
 
 
 
@@ -189,18 +218,18 @@ class SimpleDecoder(nn.Module):
             nn.ReLU(),
             nn.Linear(2*decoder_bottle* hidden_size, 2*decoder_bottle* hidden_size),
             nn.ReLU(),
-            # nn.Linear(2*decoder_bottle* hidden_size, 2*decoder_bottle* hidden_size),
-            # nn.ReLU(),
+            nn.Linear(2*decoder_bottle* hidden_size, 2*decoder_bottle* hidden_size),
+            nn.ReLU(),
             nn.Linear(2*decoder_bottle* hidden_size, 4* hidden_size)
         )
 
         self.mlp2 = nn.Sequential(
             nn.Linear(4* hidden_size, number_of_agents*decoder_bottle*fut_len),
             nn.ReLU(),
-            # nn.Linear(number_of_agents*decoder_bottle*fut_len, number_of_agents*decoder_bottle*fut_len),
-            # nn.ReLU(),
-            # nn.Linear(number_of_agents*decoder_bottle*fut_len, number_of_agents*decoder_bottle*fut_len),
-            # nn.ReLU(),
+            nn.Linear(number_of_agents*decoder_bottle*fut_len, number_of_agents*decoder_bottle*fut_len),
+            nn.ReLU(),
+            nn.Linear(number_of_agents*decoder_bottle*fut_len, number_of_agents*decoder_bottle*fut_len),
+            nn.ReLU(),
             nn.Linear(number_of_agents*decoder_bottle*fut_len, number_of_agents*2*fut_len)
         )
 
@@ -210,7 +239,6 @@ class SimpleDecoder(nn.Module):
             [ConcatBlock(self.style_input_size + hidden_size*2, hidden_size*2),
             ConcatBlock(self.style_input_size + 4* hidden_size, 4* hidden_size)]
         )
-
 
     def forward(self, latent_space, style_feat_space=None):
 
@@ -242,7 +270,7 @@ class CausalMotionModel(nn.Module):
 
         latent_space_size = 8
         self.args = args
-        self.inv_encoder = SimpleEncoder(args.obs_len, latent_space_size, NUMBER_PERSONS)
+        self.inv_encoder = NewEncoder(args.obs_len, latent_space_size, NUMBER_PERSONS)
         self.style_encoder = SimpleStyleEncoder(args)
         self.gt_encoder = GTEncoder(args)
         self.decoder = SimpleDecoder(
@@ -250,7 +278,7 @@ class CausalMotionModel(nn.Module):
             args.fut_len,
             latent_space_size,
             NUMBER_PERSONS,
-            style_input_size=self.gt_encoder.style_dim if args.gt_style else style_encoder.style_dim,
+            style_input_size=self.gt_encoder.style_dim if args.gt_style else self.style_encoder.style_dim,
             decoder_bottle=args.decoder_bottle
         )
         self.visualize_embedding = args.visualize_embedding

@@ -37,7 +37,7 @@ bs=64
 
 ### Ours with IRM
 USUAL="--contrastive 1 --classification 6" 
-e='0-0-100-50-20-300'
+e='0-0-100-350-20-300'
 irm=1.0 # 3. Set IRM weight
 TRAINING="--num_epochs $e --batch_size $bs --irm $irm"
 

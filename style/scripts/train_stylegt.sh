@@ -1,7 +1,7 @@
 # PRETRAIN
 
 ## General parameters
-GPU=0 # 1. Set GPU
+GPU=1 # 1. Set GPU
 
 
 dataset='synthetic_lr_v2' # 2. Set dataset
@@ -25,28 +25,57 @@ bs=64
 
 ## Method (uncomment the method of choice)
 
-### Vanilla
-e='0-0-0-700-0-0'
+### New Encoder
+e='0-0-0-3700-0-0'
 # irm=1.0 # 3. Set IRM weight
 dbottle=16
 
 for seed in 1 #2 3 4
 do
-    for irm in 0.0 1.0 #32 #8
+    for irm in 0.0 #1.0 #32 #8
     do
-        for lr in  1e-3 5e-4 # 1e-3 3e-4  
+        for lr in  1e-3 #1e-3 5e-4 # 1e-3 3e-4  
         do
             for enwidth in 8 #16 32 64
             do
-                exp="gt_style_${enwidth}_${train_len}_${dbottle}_${lr}_unfreeze_inv"
+                exp="gt_style_${enwidth}_${train_len}_${dbottle}_${lr}_baseline_maxadevis"
                 echo $exp
                 DIR="--tfdir runs/${dataset}/${exp}/${irm}"
-                TRAINING="--num_epochs $e --batch_size $bs --counter false --irm $irm --exp $exp --lrstyle $lr --gt_style --gt_encoder $enwidth --decoder_bottle $dbottle --visualize_prediction" # 4. Set Counter
+                TRAINING="--num_epochs $e --batch_size $bs --counter false --irm $irm --exp $exp --lrstyle $lr --gt_style --gt_encoder $enwidth --decoder_bottle $dbottle --lrstgat $lr --visualize_prediction" # 4. Set Counter --visualize_prediction
                 echo $DIR
-                CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed &
+                CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed 
             done 
             
         done
     done
 done
 #CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed 5
+
+### Training best learning rate
+# e='0-0-0-50-0-0'
+# # irm=1.0 # 3. Set IRM weight
+# dbottle=16
+# enwidth=8
+# train_len=30
+# DATA="--dataset_name $dataset --filter_envs $f_envs --reduceall ${train_len}"
+
+
+# for seed in 1 #2 3 4
+# do
+#     for irm in 0.0 #1.0 #32 #8
+#     do
+#         for stylelr in  1e-3 5e-3 1e-2 5e-4 #1e-3 5e-4 # 1e-3 3e-4  
+#         do
+#             for stgatlr in 1e-3 5e-3 1e-2 5e-4 #16 32 64
+#             do
+#                 exp="gt_style_${enwidth}_${train_len}_${dbottle}_style_${stylelr}_stgat_${stgatlr}_tweaking"
+#                 echo $exp
+#                 DIR="--tfdir runs/${dataset}/${exp}/${irm}"
+#                 TRAINING="--num_epochs $e --batch_size $bs --counter false --irm $irm --exp $exp --lrstyle $stylelr --gt_style --gt_encoder $enwidth --decoder_bottle $dbottle --lrstgat $stgatlr --visualize_prediction" # 4. Set Counter --visualize_prediction
+#                 echo $DIR
+#                 CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed &
+#             done 
+            
+#         done
+#     done
+# done

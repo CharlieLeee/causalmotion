@@ -26,7 +26,7 @@ def main(args):
     
     logging.info("Initializing Validation Set")
     val_envs_path, val_envs_name = get_envs_path(args.dataset_name, "val", args.filter_envs)#+'-'+args.filter_envs_pretrain)
-    val_loaders = [data_loader(args, val_env_path, val_env_name) for val_env_path, val_env_name in
+    val_loaders = [data_loader(args, val_env_path, val_env_name, shuffle=False) for val_env_path, val_env_name in
                    zip(val_envs_path, val_envs_name)]
     logging.info(val_envs_name)
 
@@ -256,6 +256,9 @@ def main(args):
             if training_step == 'P4':
                 if args.gt_style:
                     metric = validate_ade(model, valid_dataset, epoch, training_step, writer, stage='validation', rp=ref_pictures, args=args)
+                    # validate on the training set
+                    validate_ade(model, train_dataset, epoch, training_step, writer, stage='training', rp=ref_pictures, args=args)
+                    
                 else:
                     metric = validate_er(model, valid_dataset, epoch, writer, stage='validation')
             elif training_step in ['P3', 'P5', 'P6']:
@@ -375,20 +378,32 @@ def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, rp=N
                 # from relative path to absolute path
                 pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
                 ade_, fde_ = cal_ade_fde(fut_traj, pred_fut_traj)
+                raw_ade = cal_ade_fde(fut_traj, pred_fut_traj, mode='sumraw')[0][1].cpu().detach().numpy() / fut_traj.shape[0]
+                raw_fde = cal_ade_fde(fut_traj, pred_fut_traj, mode='sumraw')[1][1].cpu().detach().numpy()
+                
                 ade_, fde_ = ade_ / (obs_traj.shape[1] * fut_traj.shape[0]), fde_ / (obs_traj.shape[1])
                 ade_meter.update(ade_, obs_traj.shape[1]), fde_meter.update(fde_, obs_traj.shape[1])
                 ade_tot_meter.update(ade_, obs_traj.shape[1]), fde_tot_meter.update(fde_, obs_traj.shape[1])
                 
-                if args.visualize_prediction and batch_idx == 0 and (epoch % 2 == 0):
+                # Visualize sequence id
+                max_id = np.argmax(raw_ade)
+                seq_id = max_id # 0
+                
+                if args.visualize_prediction and batch_idx == 0 and (epoch % 2 == 0) and stage == 'validation':
                 # visualize output
-                    idx_start, idx_end = seq_start_end[0][0], seq_start_end[0][1]
+                    idx_start, idx_end = seq_start_end[seq_id//2][0], seq_start_end[seq_id//2][1]
                     obsv_scene = obs_traj[:, idx_start:idx_end, :]
                     pred_scene = pred_fut_traj[:, idx_start:idx_end, :]
                     gt_scene = fut_traj[:, idx_start:idx_end, :]
                     # compute ADE and FDE metrics
-                    figname = './images/visualization/epoch{}_{}_{:02d}_{:02d}_sample_ade{:.3f}_fde{:.3f}.png'.format(
-                        epoch, loader_name, 0, batch_idx, ade_, fde_)
-                    figtitle = 'Epoch {} ADE{:.3f}  FDE{:.3f}'.format(epoch, ade_, fde_)
+                    if not os.path.exists('./images/visualization/{}'.format(args.exp)):
+                        os.makedirs('./images/visualization/{}'.format(args.exp))
+                    figname = './images/visualization/{}/epoch{}_{}_seq_{:02d}_{:02d}_sample_ade{:.3f}_fde{:.3f}.png'.format(
+                        args.exp, epoch, loader_name, seq_id, batch_idx, raw_ade[seq_id], raw_fde[seq_id])
+                    bar_figname = './images/visualization/{}/epoch{}_{}_{:02d}_mean_ade{:.3f}_fde{:.3f}_bar.png'.format(
+                        args.exp, epoch, loader_name, batch_idx, ade_, fde_)
+                    plotbar(raw_ade, raw_fde, figname=bar_figname, epoch=epoch)
+                    figtitle = 'Epoch {} Seq{} ADE{:.3f}  FDE{:.3f}'.format(epoch, seq_id, raw_ade[seq_id], raw_fde[seq_id])
                     sceneplot(obsv_scene.permute(1, 0, 2).cpu().detach().numpy(), pred_scene.permute(1, 0, 2).cpu().detach().numpy(), 
                                 gt_scene.permute(1, 0, 2).cpu().detach().numpy(), figname=figname, title=figtitle)
 

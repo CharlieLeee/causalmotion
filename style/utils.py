@@ -220,7 +220,8 @@ def displacement_error(pred_fut_traj, fut_traj, consider_ped=None, mode="sum"):
         return torch.mean(loss)
     elif mode == "raw":
         return loss
-
+    elif mode == 'sumraw':
+        return [torch.sum(loss), loss]
 
 def final_displacement_error(pred_fut_pos, fut_pos, consider_ped=None, mode="sum"):
     """
@@ -241,6 +242,8 @@ def final_displacement_error(pred_fut_pos, fut_pos, consider_ped=None, mode="sum
         loss = torch.sqrt(loss.sum(dim=1))
     if mode == "raw":
         return loss
+    elif mode == 'sumraw':
+        return [torch.sum(loss), loss]
     else:
         return torch.sum(loss)
 
@@ -687,5 +690,18 @@ def sceneplot(obsv_scene, pred_scene, gt_scene, figname='scene.png', lim=9.0, nu
     plt.gca().set_aspect('equal', adjustable='box')
     plt.gca().get_xaxis().set_visible(False)
     plt.gca().get_yaxis().set_visible(False)
+    plt.savefig(figname, bbox_inches='tight', pad_inches=.1)
+    plt.close()
+    
+    
+def plotbar(raw_ade, raw_fde, figname, epoch):
+    fig, axes = plt.subplots(ncols=1, nrows=2, sharex=True, figsize=(12, 7))
+    axes[0].bar(np.arange(raw_ade.shape[0]), raw_ade)
+    axes[0].set_title('ADE')
+    
+    axes[1].bar(np.arange(raw_fde.shape[0]), raw_fde)
+    axes[1].set_title('FDE')
+    
+    plt.suptitle('Epoch: {}'.format(epoch))
     plt.savefig(figname, bbox_inches='tight', pad_inches=.1)
     plt.close()

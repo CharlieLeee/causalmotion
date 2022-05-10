@@ -4,7 +4,7 @@ from trajectories import TrajectoryDataset, SynTrajectoryDataset, seq_collate_so
 from utils import set_domain_shift, set_batch_size
 
 
-def data_loader(args, paths, name, pt=False):
+def data_loader(args, paths, name, pt=False, shuffle=True):
     alpha_e = set_domain_shift(args.domain_shifts, name)
 
     # ETH-UCY Dataset
@@ -45,7 +45,7 @@ def data_loader(args, paths, name, pt=False):
     loader = DataLoader(
         dset,
         batch_size=batch_size,
-        shuffle=args.shuffle,
+        shuffle=args.shuffle and shuffle,
         num_workers=args.loader_num_workers,
         collate_fn=seq_collate_social,
         pin_memory=False

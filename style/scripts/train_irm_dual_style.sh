@@ -1,12 +1,12 @@
 # PRETRAIN
 ## General parameters
-GPU=0 # 1. Set GPU
-exp='pretrain'
+GPU=1 # 1. Set GPU
+exp='irm_dual_style'
 
 dataset='synthetic_lr_v2' # 2. Set dataset
 f_envs='0.1l-0.1r-0.3l-0.3r-0.5l-0.5r'
 DATA="--dataset_name $dataset --filter_envs $f_envs --reduceall 9000"
-DIR="--tfdir runs/$dataset/$exp/$irm"
+DIR="--tfdir new_runs/$dataset/$exp/$irm"
 bs=64
 
 
@@ -37,14 +37,17 @@ bs=64
 
 ### Ours with IRM
 USUAL="--contrastive 1 --classification 6" 
-e='0-0-100-350-20-300'
+e='0-0-100-400-1000-1000'
 irm=1.0 # 3. Set IRM weight
-TRAINING="--num_epochs $e --batch_size $bs --irm $irm"
+dbottle=16
+lr=1e-3
+TRAINING="--num_epochs $e --batch_size $bs --irm $irm --decoder_bottle $dbottle --lrstgat $lr"
 
-for seed in 1 2 3 4
+
+for seed in 1 #2 3 4
 do  
-    CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed --visualize_embedding
+    CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed --exp $exp --visualize_prediction #--visualize_embedding
 
 done
-CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed 5 --visualize_embedding
+#CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed 5 --visualize_embedding
 

@@ -40,7 +40,7 @@ do
             do
                 exp="gt_style_${enwidth}_${train_len}_${dbottle}_${lr}_baseline_maxadevis"
                 echo $exp
-                DIR="--tfdir runs/${dataset}/${exp}/${irm}"
+                DIR="--tfdir new_runs/${dataset}/${exp}/${irm}"
                 TRAINING="--num_epochs $e --batch_size $bs --counter false --irm $irm --exp $exp --lrstyle $lr --gt_style --gt_encoder $enwidth --decoder_bottle $dbottle --lrstgat $lr --visualize_prediction" # 4. Set Counter --visualize_prediction
                 echo $DIR
                 CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed 

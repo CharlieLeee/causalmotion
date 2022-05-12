@@ -2,12 +2,12 @@
 
 ## General parameters
 GPU=0 # 1. Set GPU
-exp='pretrain_2style'
+exp='vanilla_style'
 
 dataset='synthetic_lr_v2' # 2. Set dataset
 f_envs='0.1r-0.1l-0.3r-0.3l-0.5r-0.5l'
 DATA="--dataset_name $dataset --filter_envs $f_envs --reduceall 9000"
-DIR="--tfdir runs/$dataset/$exp/$irm"
+DIR="--tfdir new_runs/$dataset/$exp/$irm"
 bs=64
 
 
@@ -25,15 +25,18 @@ bs=64
 ## Method (uncomment the method of choice)
 
 ### Vanilla
-e='0-0-100-0-0-0'
+e='0-0-3700-0-0-0'
 irm=0.0 # 3. Set IRM weight
-TRAINING="--num_epochs $e --batch_size $bs --counter false" # 4. Set Counter
+dbottle=16
+lr=1e-3
 
-for seed in 1 2 3 4
+TRAINING="--num_epochs $e --batch_size $bs --exp $exp --counter false --decoder_bottle $dbottle --lrstgat $lr --visualize_prediction" # 4. Set Counter
+
+for seed in 1 #2 3 4
 do  
-    CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed &
+    CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed 
 done
-CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed 5
+# CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed 5
 
 
 # ### Ours with IRM

@@ -44,12 +44,15 @@ def evaluate(args, loaders, model):
                     embed_saving = low_dim.cpu().detach().numpy()
                     model_info = args.resume.split('/')[5]
                     print(bidx)
-                    save_filename = step + model_info + str(bidx) + args.filter_envs
+                    foldername = step + model_info + args.dset_type
+                    save_filename = str(bidx) + args.filter_envs
                     embed_dict = {
                         'env_embeddings' : embed_saving,
                         'label' : np.array([args.filter_envs]),
                     }
-                    np.save('eval_embedding/' + '{}.npy'.format(save_filename), embed_dict)
+                    if os.path.exists('embedding_vis/' + foldername):
+                        os.makedirs('embedding_vis/' + foldername)
+                    np.save('eval_embedding/' + foldername + '/{}.npy'.format(save_filename), embed_dict)
                     
                 pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
                 

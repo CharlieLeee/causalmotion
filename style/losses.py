@@ -102,7 +102,7 @@ class CustomLoss(nn.Module):
         super(CustomLoss, self).__init__()
         self.contrastive_loss = SupConLoss()
     
-    def forward(self, model, train_iter, pretrain_iter, train_dataset, pretrain_dataset, training_step, args, stage, epoch):
+    def forward(self, model, train_iter, pretrain_iter, train_dataset, pretrain_dataset, training_step, args, stage, epoch, batch_idx=None):
         assert(training_step in ['P3', 'P4', 'P5', 'P6'])
         batch_loss = []
         env_embeddings, label_embeddings = [], [] # to store the low dim feat space for contrastive style loss, and their labels
@@ -160,15 +160,17 @@ class CustomLoss(nn.Module):
 
             batch_loss.append(single_env_loss)
 
-        # save embeddings for visualization
-        if args.visualize_embedding:
-            filename = 'embedding_vis/seed_' + str(args.seed) + training_step + 'epoch_' + str(epoch) + datetime.now().strftime("%Y_%m_%d-%I:%M:%S")
-            embed_dict = {
-                'env_embeddings' : env_embeddings,
-                'label_embeddings' : label_embeddings,
-                'pred_embeddings' : pred_embeddings
-            }
-            np.save('{}.npy'.format(filename), embed_dict)
+            # save embeddings for visualization
+            if args.visualize_embedding:
+                style_name = env_name.split('_')[7] + ('l' if 'True_clockwise' in env_name else 'r')
+                folder_name = 'embedding_vis/' + args.exp + '/'
+                filename = folder_name + 'seed_' + str(args.seed) + '_' + training_step + '_epoch_' + str(epoch) + ('_idx_' + str(batch_idx) if batch_idx is not None else '') + '_style_' + style_name
+                
+                embed_dict = {
+                    'env_embeddings' : env_embeddings,
+                    'label_embeddings' : label_embeddings,
+                }
+                np.save('{}.npy'.format(filename), embed_dict)
 
         # COMPUTE THE TOTAL LOSS ON ALL ENVIRONMENTS
         loss = torch.zeros(()).cuda()

@@ -143,5 +143,6 @@ style/new_runs/*
 # Slurm log
 *.out
 
+style/notebooks/*
 # zip 
 *.zip

@@ -40,8 +40,8 @@ def main(args):
 
     ref_pictures = [[b.cuda() for b in next(iter(loader))] for loader in val_loaders]
 
-    if args.visualize_embedding and not os.path.exists('embedding_vis'):
-        os.makedirs('embedding_vis')
+    if args.visualize_embedding and not os.path.exists('embedding_vis/' + args.exp + '/'):
+        os.makedirs('embedding_vis/' + args.exp + '/')
     
     if args.visualize_prediction and not os.path.exists('images/visualization'):
         os.makedirs('images/visualization')
@@ -306,13 +306,13 @@ def train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, t
 
     logging.info(f"- Computing loss ({stage})")
     tbar = tqdm(range(train_dataset['num_batches']))
-    for _ in tbar:
+    for batch_idx in tbar:
         
         # reset gradients
         for opt in optimizers.values(): opt.zero_grad()
 
         # compute loss (which depends on the training step)
-        loss, ped_tot = criterion(model, train_iter, pretrain_iter, train_dataset, pretrain_dataset, training_step, args, stage, epoch)
+        loss, ped_tot = criterion(model, train_iter, pretrain_iter, train_dataset, pretrain_dataset, training_step, args, stage, epoch, batch_idx)
         
         # backpropagate if needed
         if stage == 'training' and update:
@@ -373,7 +373,7 @@ def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, rp=N
                 else:   
                     if training_step<='P3': ts='P3'
                     else: ts='P6'
-                    pred_fut_traj_rel = model(batch, ts)
+                    pred_fut_traj_rel = model(batch, ts) if not args.visualize_embedding else model(batch, ts)[0] # from model.py the return of model(x, 'P6')
 
                 # from relative path to absolute path
                 pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])

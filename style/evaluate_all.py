@@ -38,7 +38,7 @@ def evaluate(args, loaders, model):
                     style_embed = torch.tensor([radius, rule]).cuda()
                     pred_fut_traj_rel = model(batch, 'P4', style_embed)
                 else:
-                    pred_fut_traj_rel = model(batch, step)[0] if args.visualize_embedding else model(batch, step)
+                    pred_fut_traj_rel = model(batch, step)[0] if (args.visualize_embedding and step=='P6') else model(batch, step)
                 if args.visualize_embedding:
                     _, low_dim = model(batch, 'P6')
                     embed_saving = low_dim.cpu().detach().numpy()
@@ -50,8 +50,8 @@ def evaluate(args, loaders, model):
                         'env_embeddings' : embed_saving,
                         'label' : np.array([args.filter_envs]),
                     }
-                    if os.path.exists('embedding_vis/' + foldername):
-                        os.makedirs('embedding_vis/' + foldername)
+                    if not os.path.exists('eval_embedding/' + foldername):
+                        os.makedirs('eval_embedding/' + foldername)
                     np.save('eval_embedding/' + foldername + '/{}.npy'.format(save_filename), embed_dict)
                     
                 pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])

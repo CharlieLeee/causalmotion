@@ -17,13 +17,13 @@ dbottle=16
 
 for seed in 1 #2 3 4
 do
-    for irm in 0.0 #1.0 
+    for irm in 1.0 #1.0 
     do
         for lr in  1e-3 #1e-3 5e-4 # 1e-3 3e-4  
         do
             for enwidth in 8 #16 32 64
             do
-                exp="gt_style_${enwidth}_${train_len}_${dbottle}_${lr}"
+                exp="gt_style_${enwidth}_${train_len}_${dbottle}_${lr}_irm1_0"
                 echo $exp
                 DIR="--tfdir new_runs/${dataset}/${exp}/${irm}"
                 TRAINING="--num_epochs $e --batch_size $bs --counter false --irm $irm --exp $exp --lrstyle $lr --gt_style --gt_encoder $enwidth --decoder_bottle $dbottle --lrstgat $lr --visualize_prediction" # if visualize prediction then add --visualize_prediction

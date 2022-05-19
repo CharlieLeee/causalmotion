@@ -240,6 +240,7 @@ def main(args):
 
         train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, training_step, writer, stage='training')
 
+        # contrastive training: train the contrastive classifier
         if args.contrastive and training_step == 'P4': model.style_encoder.train_er_classifier(train_dataset)
 
         #### way to decrease learning rate OPTIONAL
@@ -256,7 +257,7 @@ def main(args):
             if training_step == 'P4':
                 if args.gt_style:
                     metric = validate_ade(model, valid_dataset, epoch, training_step, writer, stage='validation', rp=ref_pictures, args=args)
-                    # validate on the training set
+                    # validate on the training set and save to tensorboard
                     validate_ade(model, train_dataset, epoch, training_step, writer, stage='training', rp=ref_pictures, args=args)
                     
                 else:

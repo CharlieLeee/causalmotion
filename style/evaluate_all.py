@@ -22,7 +22,7 @@ def evaluate(args, loaders, model):
             #ade_meter, fde_meter = AverageMeter("ADE", ":.4f"), AverageMeter("FDE", ":.4f")
             for bidx, batch in enumerate(loader):
                 batch = [tensor.cuda() for tensor in batch]
-                (obs_traj, fut_traj, _, _, _, _, _) = batch
+                (obs_traj, fut_traj, _, _, _, _, seq_start_end) = batch
 
                 step = args.resume.split('/')[3]
                 
@@ -31,10 +31,10 @@ def evaluate(args, loaders, model):
                     # clockwise (l) is 1 ccw (r) is -1
                     if 'r' in args.filter_envs:
                         rule = -1.
-                        radius = args.filter_envs.replace('r', '')
+                        radius = float(args.filter_envs.replace('r', ''))
                     if 'l' in args.filter_envs:
                         rule = 1. 
-                        radius = args.filter_envs.replace('l', '')
+                        radius = float(args.filter_envs.replace('l', ''))
                     style_embed = torch.tensor([radius, rule]).cuda()
                     pred_fut_traj_rel = model(batch, 'P4', style_embed)
                 else:
@@ -43,8 +43,8 @@ def evaluate(args, loaders, model):
                     _, low_dim = model(batch, 'P6')
                     embed_saving = low_dim.cpu().detach().numpy()
                     model_info = args.resume.split('/')[5]
-                    print(bidx)
-                    foldername = step + model_info + args.dset_type
+                    print("Saving embedding of batch idx: ", bidx)
+                    foldername = model_info + '/' + step + args.dset_type 
                     save_filename = str(bidx) + args.filter_envs
                     embed_dict = {
                         'env_embeddings' : embed_saving,
@@ -53,49 +53,37 @@ def evaluate(args, loaders, model):
                     if not os.path.exists('eval_embedding/' + foldername):
                         os.makedirs('eval_embedding/' + foldername)
                     np.save('eval_embedding/' + foldername + '/{}.npy'.format(save_filename), embed_dict)
-                    
+                   
                 pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
                 
                 ade_, fde_ = cal_ade_fde(fut_traj, pred_fut_traj)
+                raw_ade = cal_ade_fde(fut_traj, pred_fut_traj, mode='sumraw')[0][1].cpu().detach().numpy() / fut_traj.shape[0]
+                raw_fde = cal_ade_fde(fut_traj, pred_fut_traj, mode='sumraw')[1][1].cpu().detach().numpy()
                 ade_, fde_ = ade_ / (obs_traj.shape[1] * fut_traj.shape[0]), fde_ / (obs_traj.shape[1])
+                
+                
+                if args.visualize_prediction and (bidx == 0):
+                    max_id = np.argmax(raw_ade)
+                    seq_id = max_id
+                    idx_start, idx_end = seq_start_end[seq_id//2][0], seq_start_end[seq_id//2][1]
+                    obsv_scene = obs_traj[:, idx_start:idx_end, :]
+                    pred_scene = pred_fut_traj[:, idx_start:idx_end, :]
+                    gt_scene = fut_traj[:, idx_start:idx_end, :]
+                    # compute ADE and FDE metrics
+                    if not os.path.exists('./images/eval/visualization/{}/seed_{}_{}'.format(args.exp, args.seed, args.dset_type)):
+                        os.makedirs('./images/eval/visualization/{}/seed_{}_{}'.format(args.exp, args.seed, args.dset_type))
+                    figname = './images/eval/visualization/{}/seed_{}_{}/evalvis_{}_batch_{}_seq_{:02d}_sample_ade{:.3f}_fde{:.3f}.png'.format(
+                        args.exp, args.seed, args.dset_type, args.filter_envs, bidx, seq_id, raw_ade[seq_id], raw_fde[seq_id])
+                    bar_figname = './images/eval/visualization/{}/seed_{}_{}/env_{}_batchidx_{}_mean_ade{:.3f}_fde{:.3f}_bar.png'.format(
+                        args.exp, args.seed, args.dset_type, args.filter_envs, bidx, ade_, fde_)
+                    plotbar(raw_ade, raw_fde, figname=bar_figname, title='env_{}_batchidx_{}'.format(args.filter_envs, bidx))
+                    figtitle = 'Env {} Batch {} Seq{} ADE{:.3f}  FDE{:.3f}'.format(args.filter_envs, bidx, seq_id, raw_ade[seq_id], raw_fde[seq_id])
+                    sceneplot(obsv_scene.permute(1, 0, 2).cpu().detach().numpy(), pred_scene.permute(1, 0, 2).cpu().detach().numpy(), 
+                                gt_scene.permute(1, 0, 2).cpu().detach().numpy(), figname=figname, title=figtitle)
+
                 #ade_meter.update(ade_, obs_traj.shape[1]), fde_meter.update(fde_, obs_traj.shape[1])
                 ade_tot_meter.update(ade_, obs_traj.shape[1]), fde_tot_meter.update(fde_, obs_traj.shape[1])
         logging.info('ADE: {:.4f}\tFDE: {:.4f}'.format(ade_tot_meter.avg, fde_tot_meter.avg))
-
-
-def sceneplot(obsv_scene, pred_scene, gt_scene, figname='scene.png', lim=9.0):
-    """
-    Plot a scene
-    """
-    num_traj = pred_scene.shape[0]
-    obsv_frame = obsv_scene.shape[1]
-    pred_frame = pred_scene.shape[1]
-    cm_subsection = np.linspace(0.0, 1.0, num_traj)
-    colors = [matplotlib.cm.jet(x) for x in cm_subsection]
-
-    for i in range(num_traj):
-        for k in range(1, obsv_frame):
-            plt.plot(obsv_scene[i, k - 1:k + 1, 0], obsv_scene[i, k - 1:k + 1, 1],
-                     '-o', color=colors[i], alpha=1.0)
-
-        plt.plot([obsv_scene[i, -1, 0], pred_scene[i, 0, 0]], [obsv_scene[i, -1, 1], pred_scene[i, 0, 1]],
-                 '--', color=colors[i], alpha=1.0, linewidth=1.0)
-        for k in range(1, pred_frame):
-            alpha = 1.0 - k / pred_frame
-            width = (1.0 - alpha) * 24.0
-            plt.plot(pred_scene[i, k - 1:k + 1, 0], pred_scene[i, k - 1:k + 1, 1],
-                     '--', color=colors[i], alpha=alpha, linewidth=width)
-
-    xc = obsv_scene[:, -1, 0].mean()
-    yc = obsv_scene[:, -1, 1].mean()
-    plt.xlim(xc - lim, xc + lim)
-    plt.ylim(yc - lim / 2.0, yc + lim / 2.0)
-
-    plt.gca().set_aspect('equal', adjustable='box')
-    plt.gca().get_xaxis().set_visible(False)
-    plt.gca().get_yaxis().set_visible(False)
-    plt.savefig(figname, bbox_inches='tight', pad_inches=.1)
-    plt.close()
 
 
 def visualize(args, loader, generator):

@@ -555,14 +555,15 @@ def load_all_model(args, model, optimizers):
             
 
         # style encoder
-        assert(not 'styleinteg' in checkpoint or args.styleinteg == checkpoint['styleinteg'])
-        try:
-            model.style_encoder.load_state_dict(models_checkpoint['style'])
-            if optimizers != None: 
-                optimizers['style'].load_state_dict(checkpoint['optimizers']['style'])
-                update_lr(optimizers['style'], args.lrstyle)    
-        except Exception:
-            print('Styleinteg was wrongly chosen')
+        if not args.gt_style:
+            assert(not 'styleinteg' in checkpoint or args.styleinteg == checkpoint['styleinteg'])
+            try:
+                model.style_encoder.load_state_dict(models_checkpoint['style'])
+                if optimizers != None: 
+                    optimizers['style'].load_state_dict(checkpoint['optimizers']['style'])
+                    update_lr(optimizers['style'], args.lrstyle)    
+            except Exception:
+                print('Styleinteg was wrongly chosen')
             
         # gt style encoder
         # 'gt_style': model.gt_encoder.state_dict()    
@@ -694,14 +695,18 @@ def sceneplot(obsv_scene, pred_scene, gt_scene, figname='scene.png', lim=9.0, nu
     plt.close()
     
     
-def plotbar(raw_ade, raw_fde, figname, epoch):
+def plotbar(raw_ade, raw_fde, figname, epoch=None, title=""):
     fig, axes = plt.subplots(ncols=1, nrows=2, sharex=True, figsize=(12, 7))
     axes[0].bar(np.arange(raw_ade.shape[0]), raw_ade)
     axes[0].set_title('ADE')
+    axes[0].set_ylim((0, 1))
     
     axes[1].bar(np.arange(raw_fde.shape[0]), raw_fde)
     axes[1].set_title('FDE')
-    
-    plt.suptitle('Epoch: {}'.format(epoch))
+    axes[1].set_ylim((0, 1.5))
+    title = title
+    if epoch is not None:
+        title += 'Epoch: {}'.format(epoch)
+    plt.suptitle(title)
     plt.savefig(figname, bbox_inches='tight', pad_inches=.1)
     plt.close()

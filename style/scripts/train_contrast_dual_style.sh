@@ -22,7 +22,7 @@ bs=64
 
 ### Ours with IRM
 USUAL="--contrastive 1 --classification 6" 
-e='0-0-100-400-1000-3000'
+e='0-0-100-400-0-4000'
 irm=1.0 # 3. Set IRM weight
 dbottle=16
 lr=1e-3

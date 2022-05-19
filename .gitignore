@@ -138,6 +138,7 @@ style/embedding_vis/*
 style/eval_embedding/*
 style/eval_embedding
 style/images/visualization/*
+style/images/eval/*
 *.npy
 style/new_runs/*
 # Slurm log

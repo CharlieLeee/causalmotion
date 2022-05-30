@@ -13,19 +13,25 @@ from models import CausalMotionModel
 from parser import get_evaluation_parser
 from loader import data_loader
 from utils import *
+from loguru import logger
 
 def evaluate(args, loaders, model):
     with torch.no_grad():
         model.eval()
         ade_tot_meter, fde_tot_meter = AverageMeter("ADE", ":.4f"), AverageMeter("FDE", ":.4f")
         for loader in loaders:
+            ade_arr = []
+            fde_arr = []
             #ade_meter, fde_meter = AverageMeter("ADE", ":.4f"), AverageMeter("FDE", ":.4f")
             for bidx, batch in enumerate(loader):
                 batch = [tensor.cuda() for tensor in batch]
                 (obs_traj, fut_traj, _, _, _, _, seq_start_end) = batch
 
                 step = args.resume.split('/')[3]
-                
+                model_info_tmp = args.resume.split('/')[5]
+                epoch = model_info_tmp.split('_')[15]
+                # print('model_info_tmp: ', model_info_tmp)
+                print('epoch: ', epoch)
                 if args.gt_style:
                     # parse args.filter_envs. e.g. 0.7l
                     # clockwise (l) is 1 ccw (r) is -1
@@ -54,13 +60,19 @@ def evaluate(args, loaders, model):
                         os.makedirs('eval_embedding/' + foldername)
                     np.save('eval_embedding/' + foldername + '/{}.npy'.format(save_filename), embed_dict)
                    
-                pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
+                pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2]) # [12, 2*bz, 2]
                 
                 ade_, fde_ = cal_ade_fde(fut_traj, pred_fut_traj)
-                raw_ade = cal_ade_fde(fut_traj, pred_fut_traj, mode='sumraw')[0][1].cpu().detach().numpy() / fut_traj.shape[0]
-                raw_fde = cal_ade_fde(fut_traj, pred_fut_traj, mode='sumraw')[1][1].cpu().detach().numpy()
                 ade_, fde_ = ade_ / (obs_traj.shape[1] * fut_traj.shape[0]), fde_ / (obs_traj.shape[1])
                 
+                # calculate raw ade and fde for visualization
+                raw_ade = cal_ade_fde(fut_traj, pred_fut_traj, mode='sumraw')[0][1].cpu().detach().numpy() / fut_traj.shape[0]
+                raw_fde = cal_ade_fde(fut_traj, pred_fut_traj, mode='sumraw')[1][1].cpu().detach().numpy()
+                
+                ade_arr.append(raw_ade)
+                fde_arr.append(raw_fde)
+                #ade_meter.update(ade_, obs_traj.shape[1]), fde_meter.update(fde_, obs_traj.shape[1])
+                ade_tot_meter.update(ade_, obs_traj.shape[1]), fde_tot_meter.update(fde_, obs_traj.shape[1])
                 
                 if args.visualize_prediction and (bidx == 0):
                     max_id = np.argmax(raw_ade)
@@ -70,19 +82,19 @@ def evaluate(args, loaders, model):
                     pred_scene = pred_fut_traj[:, idx_start:idx_end, :]
                     gt_scene = fut_traj[:, idx_start:idx_end, :]
                     # compute ADE and FDE metrics
-                    if not os.path.exists('./images/eval/visualization/{}/seed_{}_{}'.format(args.exp, args.seed, args.dset_type)):
-                        os.makedirs('./images/eval/visualization/{}/seed_{}_{}'.format(args.exp, args.seed, args.dset_type))
-                    figname = './images/eval/visualization/{}/seed_{}_{}/evalvis_{}_batch_{}_seq_{:02d}_sample_ade{:.3f}_fde{:.3f}.png'.format(
-                        args.exp, args.seed, args.dset_type, args.filter_envs, bidx, seq_id, raw_ade[seq_id], raw_fde[seq_id])
-                    bar_figname = './images/eval/visualization/{}/seed_{}_{}/env_{}_batchidx_{}_mean_ade{:.3f}_fde{:.3f}_bar.png'.format(
-                        args.exp, args.seed, args.dset_type, args.filter_envs, bidx, ade_, fde_)
-                    plotbar(raw_ade, raw_fde, figname=bar_figname, title='env_{}_batchidx_{}'.format(args.filter_envs, bidx))
+                    if not os.path.exists('./images/eval/visualization/{}_epoch_{}/seed_{}_{}'.format(args.exp, epoch, args.seed, args.dset_type)):
+                        os.makedirs('./images/eval/visualization/{}_epoch_{}/seed_{}_{}'.format(args.exp, epoch, args.seed, args.dset_type))
+                    figname = './images/eval/visualization/{}_epoch_{}/seed_{}_{}/evalvis_{}_batch_{}_seq_{:02d}_sample_ade{:.3f}_fde{:.3f}.png'.format(
+                        args.exp, epoch, args.seed, args.dset_type, args.filter_envs, bidx, seq_id, raw_ade[seq_id], raw_fde[seq_id])
                     figtitle = 'Env {} Batch {} Seq{} ADE{:.3f}  FDE{:.3f}'.format(args.filter_envs, bidx, seq_id, raw_ade[seq_id], raw_fde[seq_id])
                     sceneplot(obsv_scene.permute(1, 0, 2).cpu().detach().numpy(), pred_scene.permute(1, 0, 2).cpu().detach().numpy(), 
-                                gt_scene.permute(1, 0, 2).cpu().detach().numpy(), figname=figname, title=figtitle)
+                                gt_scene.permute(1, 0, 2).cpu().detach().numpy(), figname=figname, title=figtitle)\
+            
+            if args.visualize_prediction:
+                bar_figname = './images/eval/visualization/{}_epoch_{}/seed_{}_{}/env_{}_mean_ade{:.3f}_fde{:.3f}_bar.png'.format(
+                            args.exp, epoch, args.seed, args.dset_type, args.filter_envs, ade_, fde_)
+                plotbar(np.concatenate(ade_arr), np.concatenate(fde_arr), figname=bar_figname, title='env_{}'.format(args.filter_envs))
 
-                #ade_meter.update(ade_, obs_traj.shape[1]), fde_meter.update(fde_, obs_traj.shape[1])
-                ade_tot_meter.update(ade_, obs_traj.shape[1]), fde_tot_meter.update(fde_, obs_traj.shape[1])
         logging.info('ADE: {:.4f}\tFDE: {:.4f}'.format(ade_tot_meter.avg, fde_tot_meter.avg))
 
 
@@ -175,7 +187,10 @@ def main(args):
 if __name__ == "__main__":
     args = get_evaluation_parser().parse_args()
     model_param = args.resume.split('/')
-    set_logger(os.path.join(args.log_dir, args.dataset_name,'finetune' if args.finetune else 'pretrain',
-                            f'exp_{model_param[2]}_irm_{model_param[3]}_data_{args.dset_type}_{args.filter_envs}_ft_{model_param[4]}_red_{model_param[5][7:-8]}_seed_{args.seed}_reduce_{args.reduce}.log'))
+    try:
+        set_logger(os.path.join(args.log_dir, args.dataset_name,'finetune' if args.finetune else 'pretrain',
+                                f'exp_{model_param[2]}_irm_{model_param[3]}_data_{args.dset_type}_{args.filter_envs}_ft_{model_param[4]}_red_{model_param[5][7:-8]}_seed_{args.seed}_reduce_{args.reduce}.log'))
+    except:
+        pass
     set_seed_globally(args.seed)
     main(args)

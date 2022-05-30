@@ -282,7 +282,8 @@ def main(args):
                 save_all_model(args, model, optimizers, metric, epoch, training_step)
                 print(f'\n{"_"*150}\n')
         else:
-            save_all_model(args, model, optimizers, metric, epoch, training_step)
+            if epoch % 100 == 0:
+                save_all_model(args, model, optimizers, metric, epoch, training_step)
         
             
     writer.close()

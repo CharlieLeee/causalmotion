@@ -270,7 +270,7 @@ class CausalMotionModel(nn.Module):
 
         latent_space_size = 8
         self.args = args
-        self.inv_encoder = NewEncoder(args.obs_len, latent_space_size, NUMBER_PERSONS)
+        self.inv_encoder = SimpleEncoder(args.obs_len, latent_space_size, NUMBER_PERSONS)
         self.style_encoder = SimpleStyleEncoder(args)
         self.gt_encoder = GTEncoder(args)
         self.decoder = SimpleDecoder(

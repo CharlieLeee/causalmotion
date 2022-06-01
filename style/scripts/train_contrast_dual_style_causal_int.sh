@@ -25,14 +25,18 @@ e='0-0-0-400-50-500'
 irm=1.0 # 3. Set IRM weight
 dbottle=16
 lr=1e-3
-TRAINING="--num_epochs $e --batch_size $bs --irm $irm --decoder_bottle $dbottle --lrstgat $lr "
+norm='group'
+TRAINING="--num_epochs $e --batch_size $bs --irm $irm --decoder_bottle $dbottle --lrstgat $lr --norm_type ${norm} --causal_decoder"
 
 
 for seed in 1 #2 3 4 5
 do  
-    exp='contrast_dual_style_baseline'
-    DIR="--tfdir new_runs/$dataset/$exp/$irm"
-    CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed --exp $exp --visualize_prediction # --visualize_embedding
+    for norm in 'group' 'batch' 'layer'
+    do
+        exp='contrast_dual_style_causaldecode_${norm}'
+        DIR="--tfdir new_runs/$dataset/$exp/$irm"
+        CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed --exp $exp --visualize_prediction # --visualize_embedding
+    done
 done
 #CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed 5 --visualize_embedding
 

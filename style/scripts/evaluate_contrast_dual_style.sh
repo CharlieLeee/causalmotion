@@ -3,19 +3,19 @@
 
 GPU=1 # 0. Set GPU
 EVALUATION="--metrics accuracy"
-exp="contrast_dual_style"
-dataset="synthetic_lr_v2" # 1. Set Dataset
+exp="contrast_dual_style_default"
+dataset="synthetic_lr_v3" # 1. Set Dataset
 dset_type="test"
 bs=64
-reduceall=9000
+reduceall=10000
 shuffle=False
 dbottle=16
 Visualize="--visualize_embedding --visualize_prediction"
 
 
 step="P6" 
-epochs_string='0-0-100-400-1000-3000'
-epoch=4200
+epochs_string='0-0-100-50-20-300'
+epoch=400
 irm=1.0 # 2. Set IRM
 for f_envs in "0.1l" "0.1r" "0.2l" "0.2r" "0.3l" "0.3r" "0.4l" "0.4r" "0.5l" "0.5r" "0.6l" "0.6r" "0.7l" "0.7r" 
 do

@@ -31,7 +31,8 @@ def evaluate(args, loaders, model):
                 model_info_tmp = args.resume.split('/')[5]
                 epoch = model_info_tmp.split('_')[15]
                 # print('model_info_tmp: ', model_info_tmp)
-                print('epoch: ', epoch)
+                # print('epoch: ', epoch)
+                low_dim = None
                 if args.gt_style:
                     # parse args.filter_envs. e.g. 0.7l
                     # clockwise (l) is 1 ccw (r) is -1
@@ -42,19 +43,23 @@ def evaluate(args, loaders, model):
                         rule = 1. 
                         radius = float(args.filter_envs.replace('l', ''))
                     style_embed = torch.tensor([radius, rule]).cuda()
-                    pred_fut_traj_rel = model(batch, 'P4', style_embed)
+                    pred_fut_traj_rel, [latent_content_space, first_concat, second_concat] = model(batch, 'P4', style_embed, inspect=True)
                 else:
-                    pred_fut_traj_rel = model(batch, step)[0] if (args.visualize_embedding and step=='P6') else model(batch, step)
+                    if step == 'P6' and args.visualize_embedding:
+                        pred_fut_traj_rel, low_dim, [latent_content_space, first_concat, second_concat] = model(batch, step, inspect=True)
+                    else:
+                        pred_fut_traj_rel, [latent_content_space, first_concat, second_concat] = model(batch, step, inspect=True)
                 if args.visualize_embedding:
-                    _, low_dim = model(batch, 'P6')
-                    embed_saving = low_dim.cpu().detach().numpy()
-                    model_info = args.resume.split('/')[5]
+                    # model_info = args.resume.split('/')[5]
                     print("Saving embedding of batch idx: ", bidx)
-                    foldername = model_info + '/' + step + args.dset_type 
+                    foldername = args.exp + '/' + step + args.dset_type 
                     save_filename = str(bidx) + args.filter_envs
                     embed_dict = {
-                        'env_embeddings' : embed_saving,
+                        'style_embedding' : low_dim.cpu().detach().numpy() if low_dim is not None else None,
                         'label' : np.array([args.filter_envs]),
+                        'latent_content_space': latent_content_space.cpu().detach().numpy(),
+                        'first_concat': first_concat.cpu().detach().numpy(),
+                        'second_concat': second_concat.cpu().detach().numpy()
                     }
                     if not os.path.exists('eval_embedding/' + foldername):
                         os.makedirs('eval_embedding/' + foldername)

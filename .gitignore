@@ -144,6 +144,9 @@ style/new_runs/*
 # Slurm log
 *.out
 
-style/notebooks/*
+style/notebooks/*.png
+style/notebooks/*.pdf
 # zip 
 *.zip
+
+style/new_runs/*

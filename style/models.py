@@ -24,6 +24,72 @@ class ConcatBlock(nn.Module):
         content_and_style = torch.cat((x, style.repeat(B, 1)), dim=1)
         out = self.perceptron(content_and_style)
         return out + x
+    
+class CausalDecoder(nn.Module):
+    def __init__(self, args, obs_len, fut_len, invariant_dim, style_dim, num_agents, normalize_type='group', decoder_bottle=2) -> None:
+        super().__init__()
+
+        self.args = args
+        self.obs_len = obs_len
+        self.fut_len = fut_len
+        self.num_agents = num_agents
+        self.invariant_dim = invariant_dim
+        self.style_dim = style_dim
+        print('normalize_type: ', normalize_type)
+
+        if normalize_type not in ['layer', 'batch' , 'group']:
+            raise ValueError('normalize type: {} not in required list!'.format(normalize_type))
+        if normalize_type == 'layer':
+            self.inv_norm_layer = nn.LayerNorm(invariant_dim)
+            self.style_norm_layer = nn.LayerNorm(style_dim)
+        elif normalize_type == 'batch':
+            self.inv_norm_layer = nn.BatchNorm1d(invariant_dim)
+            self.style_norm_layer = nn.BatchNorm1d(style_dim)
+        elif normalize_type == 'group':
+            self.inv_norm_layer = nn.GroupNorm(num_groups=num_agents, num_channels=invariant_dim)
+            self.style_norm_layer = nn.GroupNorm(num_groups=1, num_channels=style_dim)
+        
+        self.decoder = nn.Sequential(
+            nn.Linear(style_dim+invariant_dim, 2*decoder_bottle* style_dim),
+            nn.ReLU(),
+            nn.Linear(2*decoder_bottle* style_dim, 2*decoder_bottle* style_dim),
+            nn.ReLU(),
+            nn.Linear(2*decoder_bottle* style_dim, num_agents*2*fut_len)
+        )
+        
+    def forward(self, latent_space, style_feat_space=None):
+        # invariant: bz, 2, history_len
+        # style:     embedding_dim
+        # return: bz, 2*history_len
+        latent_space = torch.stack(latent_space.split(2, dim=0), dim=0)
+        
+        bz = latent_space.size(0)
+        latent_space = latent_space.flatten(start_dim=1)
+        
+        if style_feat_space is not None:
+            style_feat_space = style_feat_space.repeat(bz, 1)
+        else:
+            style_feat_space = torch.zeros(bz, self.style_dim).cuda()
+            
+        latent_space = self.inv_norm_layer(latent_space)
+        style_feat_space = self.style_norm_layer(style_feat_space)
+        out = torch.cat((latent_space, style_feat_space), dim=1)
+        first_concat = out
+        second_concat = None
+        
+        out = self.decoder(out)
+        out = torch.reshape(out, (out.shape[0], self.num_agents, self.fut_len, 2))
+        out = out.flatten(start_dim=0, end_dim=1)
+        out = torch.permute(out, (1, 0, 2))
+        
+        
+        if self.args.visualize_embedding:
+            # Also return two concatenated embeddings
+            return out, [first_concat, second_concat]
+        return out, [None, None]
+        
+        
+        
 
 class GTEncoder(nn.Module):
     def __init__(self, args, style_dim=8):
@@ -160,14 +226,14 @@ class SimpleEncoder(nn.Module):
         
         return encoded
 
-class NewEncoder(nn.Module):
+class ConvEncoder(nn.Module):
     def __init__(
             self,
             obs_len,
             hidden_size,
             number_agents,
     ):
-        super(NewEncoder, self).__init__()
+        super(ConvEncoder, self).__init__()
 
         # num of frames per sequence
         self.obs_len = obs_len
@@ -191,11 +257,10 @@ class NewEncoder(nn.Module):
         return out
         
 
-
-
 class SimpleDecoder(nn.Module):
     def __init__(
             self,
+            args,
             obs_len,
             fut_len,
             hidden_size,
@@ -208,6 +273,7 @@ class SimpleDecoder(nn.Module):
         # num of frames per sequence
         self.obs_len = obs_len
         self.fut_len = fut_len
+        self.args = args
         
         self.style_input_size = style_input_size
 
@@ -247,12 +313,13 @@ class SimpleDecoder(nn.Module):
 
         if style_feat_space != None:
             out = self.style_blocks[0](out, style_feat_space)
-
+        first_concat = out
         out = self.mlp1(out)
 
         if style_feat_space != None:
             out = self.style_blocks[1](out, style_feat_space)
-
+        second_concat = out
+        
         out = self.mlp2(out)
 
         out = torch.reshape(out, (out.shape[0], self.number_of_agents, self.fut_len, 2))
@@ -261,7 +328,10 @@ class SimpleDecoder(nn.Module):
 
         out = torch.permute(out, (1, 0, 2))
 
-        return out
+        if self.args.visualize_embedding:
+            # Also return two concatenated embeddings
+            return out, [first_concat, second_concat]
+        return out, [None, None]
 
 
 class CausalMotionModel(nn.Module):
@@ -273,17 +343,30 @@ class CausalMotionModel(nn.Module):
         self.inv_encoder = SimpleEncoder(args.obs_len, latent_space_size, NUMBER_PERSONS)
         self.style_encoder = SimpleStyleEncoder(args)
         self.gt_encoder = GTEncoder(args)
-        self.decoder = SimpleDecoder(
-            args.obs_len,
-            args.fut_len,
-            latent_space_size,
-            NUMBER_PERSONS,
-            style_input_size=self.gt_encoder.style_dim if args.gt_style else self.style_encoder.style_dim,
-            decoder_bottle=args.decoder_bottle
-        )
+        if args.causal_decoder:        
+            self.decoder = CausalDecoder(
+                args,
+                args.obs_len,
+                args.fut_len,
+                latent_space_size*2,
+                style_dim=self.gt_encoder.style_dim if args.gt_style else self.style_encoder.style_dim,
+                num_agents=NUMBER_PERSONS,
+                normalize_type=args.norm_type,
+                decoder_bottle=args.decoder_bottle
+            )
+        else:
+            self.decoder = SimpleDecoder(
+                args,
+                args.obs_len,
+                args.fut_len,
+                latent_space_size,
+                NUMBER_PERSONS,
+                style_input_size=self.gt_encoder.style_dim if args.gt_style else self.style_encoder.style_dim,
+                decoder_bottle=args.decoder_bottle
+            )
         self.visualize_embedding = args.visualize_embedding
 
-    def forward(self, batch, training_step, gt_style=None):
+    def forward(self, batch, training_step, gt_style=None, inspect=False):
         assert (training_step in ['P3', 'P4', 'P5', 'P6'])
 
         (obj_traj, _, _, _, _, style_input, _) = batch
@@ -295,7 +378,9 @@ class CausalMotionModel(nn.Module):
                 if self.args.gt_style:
                     style_embedding = self.gt_encoder(gt_style)
                     latent_content_space = self.inv_encoder(obj_traj)
-                    output = self.decoder(latent_content_space, style_feat_space=style_embedding)
+                    output, [first_concat, second_concat] = self.decoder(latent_content_space, style_feat_space=style_embedding)
+                    if inspect:
+                        return output, [latent_content_space, first_concat, second_concat]
                     return output
                 else:
                     return self.style_encoder(style_input, 'low')
@@ -303,7 +388,9 @@ class CausalMotionModel(nn.Module):
                 if self.args.gt_style:
                     style_embedding = self.gt_encoder(gt_style)
                     latent_content_space = self.inv_encoder(obj_traj)
-                    output = self.decoder(latent_content_space, style_feat_space=style_embedding)
+                    output, [first_concat, second_concat] = self.decoder(latent_content_space, style_feat_space=style_embedding)
+                    if inspect:
+                        return output, [latent_content_space, first_concat, second_concat] 
                     return output
                 else:
                     return self.style_encoder(style_input, 'class')
@@ -317,10 +404,13 @@ class CausalMotionModel(nn.Module):
             low_dim, style_encoding = self.style_encoder(style_input, 'both')
 
         # compute prediction
-        output = self.decoder(latent_content_space, style_feat_space=style_encoding)
+        output, [first_concat, second_concat] = self.decoder(latent_content_space, style_feat_space=style_encoding)
 
         if training_step == 'P6' and (self.training or self.visualize_embedding):
-            low_dim, style_encoding = self.style_encoder(style_input, 'both')
-            return output, low_dim  # need the low_dim to keep training contrastive loss
+            if inspect:
+                return output, low_dim, [latent_content_space, first_concat, second_concat]  # need the low_dim to keep training contrastive loss
+            return output, low_dim
         else:
+            if inspect:
+                return output, [latent_content_space, first_concat, second_concat]
             return output

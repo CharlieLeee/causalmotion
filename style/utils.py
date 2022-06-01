@@ -7,6 +7,7 @@ import numpy as np
 from loguru import logger
 import matplotlib
 import matplotlib.pyplot as plt
+import io
 
 NUMBER_PERSONS = 2
 NUMBER_COUPLES = 2
@@ -651,7 +652,7 @@ def from_abs_to_social(abs_coord):
     res = torch.stack(res)
     return res
 
-def sceneplot(obsv_scene, pred_scene, gt_scene, figname='scene.png', lim=9.0, number=2, title=None):
+def sceneplot(obsv_scene, pred_scene, gt_scene, figname='scene.png', lim=9.0, number=2, title=None, save_to_disk=True):
     """
     Plot a scene
     """
@@ -691,11 +692,16 @@ def sceneplot(obsv_scene, pred_scene, gt_scene, figname='scene.png', lim=9.0, nu
     plt.gca().set_aspect('equal', adjustable='box')
     plt.gca().get_xaxis().set_visible(False)
     plt.gca().get_yaxis().set_visible(False)
-    plt.savefig(figname, bbox_inches='tight', pad_inches=.1)
+    if save_to_disk:
+        plt.savefig(figname, bbox_inches='tight', pad_inches=.1)
+    buf = io.BytesIO()
+    plt.savefig(buf, format='jpeg', bbox_inches='tight', pad_inches=.1)
+    buf.seek(0)
     plt.close()
+    return buf
     
     
-def plotbar(raw_ade, raw_fde, figname, epoch=None, title=""):
+def plotbar(raw_ade, raw_fde, figname, epoch=None, title="", save_to_disk=False):
     fig, axes = plt.subplots(ncols=1, nrows=2, sharex=True, figsize=(12, 7))
     axes[0].bar(np.arange(raw_ade.shape[0]), raw_ade)
     axes[0].set_title('ADE')
@@ -708,5 +714,10 @@ def plotbar(raw_ade, raw_fde, figname, epoch=None, title=""):
     if epoch is not None:
         title += 'Epoch: {}'.format(epoch)
     plt.suptitle(title)
-    plt.savefig(figname, bbox_inches='tight', pad_inches=.1)
+    if save_to_disk:
+        plt.savefig(figname, bbox_inches='tight', pad_inches=.1)
+    buf = io.BytesIO()
+    plt.savefig(buf, format='jpeg', bbox_inches='tight', pad_inches=.1)
+    buf.seek(0)
     plt.close()
+    return buf

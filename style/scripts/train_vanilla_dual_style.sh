@@ -6,7 +6,7 @@ exp='vanilla_style'
 
 dataset='synthetic_lr_v2' # 2. Set dataset
 f_envs='0.1r-0.1l-0.3r-0.3l-0.5r-0.5l'
-DATA="--dataset_name $dataset --filter_envs $f_envs --reduceall 9000"
+DATA="--dataset_name $dataset --filter_envs $f_envs --reduceall 10000"
 DIR="--tfdir new_runs/$dataset/$exp/$irm"
 bs=64
 
@@ -25,12 +25,13 @@ bs=64
 ## Method (uncomment the method of choice)
 
 ### Vanilla
-e='0-0-3700-0-0-0'
-irm=0.0 # 3. Set IRM weight
+e='0-0-1000-0-0-0'
+irm=1.0 # 3. Set IRM weight # without irm 0.06 0.1
+
 dbottle=16
 lr=1e-3
 
-TRAINING="--num_epochs $e --batch_size $bs --exp $exp --counter false --decoder_bottle $dbottle --lrstgat $lr --visualize_prediction" # 4. Set Counter
+TRAINING="--num_epochs $e --batch_size $bs --exp $exp --irm $irm --counter false --decoder_bottle $dbottle --lrstgat $lr --visualize_prediction" # 4. Set Counter
 
 for seed in 1 #2 3 4
 do  

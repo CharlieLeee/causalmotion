@@ -7,6 +7,8 @@ from utils import *
 from models import CausalMotionModel
 from losses import criterion
 from visualize import draw_image, draw_solo, draw_solo_all
+import PIL.Image
+from torchvision.transforms import ToTensor
 
 from loguru import logger
 
@@ -161,7 +163,7 @@ def main(args):
             [
                {"params": model.decoder.style_blocks.parameters(), 'lr': args.lrinteg}, 
             ]    
-        ) if model.decoder.style_blocks != None else torch.optim.Adam(model.decoder.parameters()))
+        ) if (hasattr(model.decoder, 'style_blocks') and model.decoder.style_blocks != None) else torch.optim.Adam(model.decoder.parameters()))
     }
 
     if args.resume:
@@ -190,6 +192,7 @@ def main(args):
         return 'P6'
     
     training_step = get_training_step(args.start_epoch)
+    print('training step: ', training_step)
     if args.finetune:
         with torch.no_grad():
             validate_ade(model, train_dataset, args.start_epoch-1,  'P6', writer, stage='training', args=args)
@@ -391,7 +394,7 @@ def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, rp=N
                 max_id = np.argmax(raw_ade)
                 seq_id = max_id # 0
                 
-                if args.visualize_prediction and batch_idx == 0 and (epoch % 2 == 0) and stage == 'validation':
+                if args.visualize_prediction and batch_idx == 0 and (epoch % 10 == 0) and stage == 'validation':
                 # visualize output
                     idx_start, idx_end = seq_start_end[seq_id//2][0], seq_start_end[seq_id//2][1]
                     obsv_scene = obs_traj[:, idx_start:idx_end, :]
@@ -404,10 +407,16 @@ def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, rp=N
                         args.exp, epoch, loader_name, seq_id, batch_idx, raw_ade[seq_id], raw_fde[seq_id])
                     bar_figname = './images/visualization/{}/epoch{}_{}_{:02d}_mean_ade{:.3f}_fde{:.3f}_bar.png'.format(
                         args.exp, epoch, loader_name, batch_idx, ade_, fde_)
-                    plotbar(raw_ade, raw_fde, figname=bar_figname, epoch=epoch)
+                    bar_buf = plotbar(raw_ade, raw_fde, figname=bar_figname, epoch=epoch)
                     figtitle = 'Epoch {} Seq{} ADE{:.3f}  FDE{:.3f}'.format(epoch, seq_id, raw_ade[seq_id], raw_fde[seq_id])
-                    sceneplot(obsv_scene.permute(1, 0, 2).cpu().detach().numpy(), pred_scene.permute(1, 0, 2).cpu().detach().numpy(), 
+                    scene_buf = sceneplot(obsv_scene.permute(1, 0, 2).cpu().detach().numpy(), pred_scene.permute(1, 0, 2).cpu().detach().numpy(), 
                                 gt_scene.permute(1, 0, 2).cpu().detach().numpy(), figname=figname, title=figtitle)
+                    bar_img = PIL.Image.open(bar_buf)
+                    bar_img = ToTensor()(bar_img)
+                    writer.add_image('Bar Image of {}'.format(batch_idx), bar_img, epoch)
+                    scene_img = PIL.Image.open(scene_buf)
+                    scene_img = ToTensor()(scene_img)
+                    writer.add_image('Scene Image of {}'.format(batch_idx), scene_img, epoch)
 
             logging.info(f'\t\t ADE on {loader_name:<25} dataset:\t {ade_meter.avg}')
 

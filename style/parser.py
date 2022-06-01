@@ -25,7 +25,7 @@ def get_training_parser():
     parser.add_argument("--filter_envs", type=str, default="0.1-0.3-0.5", help="Filter only certain environments (i.e 0.1-0.3-0.5)")
     parser.add_argument("--filter_envs_pretrain", type=str, default="", help="Say which env were used during pretraining (for contrastive loss) (i.e 0.1-0.3-0.5)")
     parser.add_argument('--reduce', default=0, type=int)
-    parser.add_argument('--reduceall', default=0, type=int)
+    parser.add_argument('--reduceall', default=100, type=int)
     parser.add_argument('--testonly', default=0, type=int, help='Only test model. 0 -> training, 1 -> testing, 3 -> testing with refinement') # 0 is normal train, 1 is test, 2 is test with k, 3 is ttr
     # randomness
     parser.add_argument("--seed", type=int, default=72, help="Random seed")
@@ -107,12 +107,15 @@ def get_training_parser():
     parser.add_argument("--unbiased", default=True, type=bool, help='')
 
     parser.add_argument("--visualize_embedding", action='store_true', default=False, help='save embedding for visualization') 
-    parser.add_argument("--gt_style", action='store_true', default=False, help='use ground truth style as input') 
+    parser.add_argument("--gt_style", action='store_true', default=True, help='use ground truth style as input') 
     parser.add_argument("--gt_encoder", default=16, type=int, help='hidden dim for encoder of gt')
     parser.add_argument("--decoder_bottle", default=2, type=int, help='decoder bottleneck width')
     parser.add_argument("--visualize_eval_out", action='store_true', default=False, help='visualize the evaluation output') 
     parser.add_argument("--exp", default='pretrain', type=str)
     parser.add_argument("--visualize_prediction", action='store_true', default=False, help='save prediction during training') 
+    parser.add_argument("--causal_decoder", action='store_true', default=False, help='use causal decoder') 
+    parser.add_argument("--norm_type", default='group', type=str, help='Type of normalization method in causal integrator')
+    
     
     
     return parser

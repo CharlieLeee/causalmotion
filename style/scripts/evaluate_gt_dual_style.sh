@@ -13,12 +13,11 @@ enwidth=8
 dbottle=16
 Visualize="--visualize_embedding --visualize_prediction"
 
-
 step="P4" 
 epochs_string='0-0-0-3700-0-0'
-epoch=3700
+epoch=1000
 irm=0.0 # 2. Set IRM
-for f_envs in "0.1l" "0.1r" "0.2l" "0.2r" "0.3l" "0.3r" "0.4l" "0.4r" "0.5l" "0.5r" "0.6l" "0.6r" "0.7l" "0.7r" 
+for f_envs in "0.1l" "0.1r" "0.2l" "0.2r" "0.3l" "0.3r" "0.4l" "0.4r" "0.5l" "0.5r" "0.6l" "0.6r" "0.7l" "0.7r" #"0.8l" "0.8r" "0.9l" "0.9r" "1.0l" "1.0r"
 do
     MODEL="--gt_style --decoder_bottle $dbottle --gt_encoder $enwidth"
     DATA="--dataset_name $dataset --filter_envs $f_envs --batch_size $bs --dset_type $dset_type --classification 6 --shuffle ${shuffle}"

@@ -3,7 +3,7 @@
 
 GPU=1 # 0. Set GPU
 EVALUATION="--metrics accuracy"
-exp="contrast_dual_style_default"
+exp="contrast_dual_style_multiseed"
 dataset="synthetic_lr_v2" # 1. Set Dataset
 dset_type="test"
 bs=64

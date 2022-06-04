@@ -35,9 +35,10 @@ class CausalDecoder(nn.Module):
         self.num_agents = num_agents
         self.invariant_dim = invariant_dim
         self.style_dim = style_dim
+        self.normalize_type = normalize_type
         print('normalize_type: ', normalize_type)
 
-        if normalize_type not in ['layer', 'batch' , 'group']:
+        if normalize_type not in ['layer', 'batch' , 'group', 'none']:
             raise ValueError('normalize type: {} not in required list!'.format(normalize_type))
         if normalize_type == 'layer':
             self.inv_norm_layer = nn.LayerNorm(invariant_dim)
@@ -48,6 +49,9 @@ class CausalDecoder(nn.Module):
         elif normalize_type == 'group':
             self.inv_norm_layer = nn.GroupNorm(num_groups=num_agents, num_channels=invariant_dim)
             self.style_norm_layer = nn.GroupNorm(num_groups=1, num_channels=style_dim)
+        elif normalize_type == 'none':
+            self.inv_norm_layer = nn.Identity()
+            self.style_norm_layer = nn.Identity()
         
         self.decoder = nn.Sequential(
             nn.Linear(style_dim+invariant_dim, 2*decoder_bottle* style_dim),

@@ -130,6 +130,7 @@ dmypy.json
 
 style/log/*
 style/models/*
+style/old_models/*
 style/runs/*
 style/results/*
 style/datasets/*
@@ -150,3 +151,4 @@ style/notebooks/*.pdf
 *.zip
 
 style/new_runs/*
+style/causal_runs/*

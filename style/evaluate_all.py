@@ -34,6 +34,7 @@ def evaluate(args, loaders, model):
                 # print('epoch: ', epoch)
                 low_dim = None
                 if args.gt_style:
+                    print('Using gt_style...')
                     # parse args.filter_envs. e.g. 0.7l
                     # clockwise (l) is 1 ccw (r) is -1
                     if 'r' in args.filter_envs:
@@ -45,21 +46,28 @@ def evaluate(args, loaders, model):
                     style_embed = torch.tensor([radius, rule]).cuda()
                     pred_fut_traj_rel, [latent_content_space, first_concat, second_concat] = model(batch, 'P4', style_embed, inspect=True)
                 else:
-                    if step == 'P6' and args.visualize_embedding:
-                        pred_fut_traj_rel, low_dim, [latent_content_space, first_concat, second_concat] = model(batch, step, inspect=True)
+                    print('Not using gt_style...')
+                    if args.visualize_embedding:
+                        pred_fut_traj_rel, low_dim, [latent_content_space, first_concat, second_concat] = model(batch, 'P6', inspect=True)
+                        print('low_dim: ', low_dim.shape)
                     else:
                         pred_fut_traj_rel, [latent_content_space, first_concat, second_concat] = model(batch, step, inspect=True)
                 if args.visualize_embedding:
                     # model_info = args.resume.split('/')[5]
                     print("Saving embedding of batch idx: ", bidx)
-                    foldername = args.exp + '/' + step + args.dset_type 
+                    foldername = args.exp + '/' + step + '_' + epoch + args.dset_type 
                     save_filename = str(bidx) + args.filter_envs
+                    
+                    # same as in the decoder
+                    latent_content_space = torch.stack(latent_content_space.split(2, dim=0), dim=0)
+                    latent_content_space = latent_content_space.flatten(start_dim=1)
+                    
                     embed_dict = {
                         'style_embedding' : low_dim.cpu().detach().numpy() if low_dim is not None else None,
                         'label' : np.array([args.filter_envs]),
                         'latent_content_space': latent_content_space.cpu().detach().numpy(),
                         'first_concat': first_concat.cpu().detach().numpy(),
-                        'second_concat': second_concat.cpu().detach().numpy()
+                        'second_concat': second_concat.cpu().detach().numpy() if second_concat is not None else None
                     }
                     if not os.path.exists('eval_embedding/' + foldername):
                         os.makedirs('eval_embedding/' + foldername)

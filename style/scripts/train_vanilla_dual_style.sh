@@ -1,13 +1,12 @@
 # Vanilla ERM with dual style dataset
 
 ## General parameters
-GPU=0 # 1. Set GPU
-exp='vanilla_style'
+GPU=2 # 1. Set GPU
+
 
 dataset='synthetic_lr_v2' # 2. Set dataset
 f_envs='0.1r-0.1l-0.3r-0.3l-0.5r-0.5l'
-DATA="--dataset_name $dataset --filter_envs $f_envs --reduceall 10000"
-DIR="--tfdir new_runs/$dataset/$exp/$irm"
+DATA="--dataset_name $dataset --filter_envs $f_envs --reduceall 9000"
 bs=64
 
 
@@ -31,11 +30,20 @@ irm=1.0 # 3. Set IRM weight # without irm 0.06 0.1
 dbottle=16
 lr=1e-3
 
-TRAINING="--num_epochs $e --batch_size $bs --exp $exp --irm $irm --counter false --decoder_bottle $dbottle --lrstgat $lr --visualize_prediction" # 4. Set Counter
 
-for seed in 1 #2 3 4
+for seed in 1 2 3 4
 do  
-    CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed 
+    exp="vanilla_style_multiseed_${seed}"
+    TRAINING="--num_epochs $e --batch_size $bs --exp $exp --irm $irm --counter false --decoder_bottle $dbottle --lrstgat $lr --visualize_prediction" # 4. Set Counter
+    DIR="--tfdir causal_runs/$dataset/$exp/$irm"
+    CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed &
+done
+for seed in 5
+do  
+    exp="vanilla_style_multiseed_${seed}"
+    DIR="--tfdir causal_runs/$dataset/$exp/$irm"
+    TRAINING="--num_epochs $e --batch_size $bs --exp $exp --irm $irm --counter false --decoder_bottle $dbottle --lrstgat $lr --visualize_prediction" # 4. Set Counter
+    CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed  &
 done
 # CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed 5
 

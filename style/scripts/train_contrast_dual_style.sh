@@ -21,7 +21,7 @@ bs=64
 
 ### Ours with IRM
 USUAL="--contrastive 1 --classification 6" 
-e='0-0-0-400-50-500'
+e='0-0-100-100-50-500'
 irm=1.0 # 3. Set IRM weight
 dbottle=16
 lr=1e-3
@@ -31,7 +31,7 @@ TRAINING="--num_epochs $e --batch_size $bs --irm $irm --decoder_bottle $dbottle 
 for seed in 1 #2 3 4 5
 do  
     exp='contrast_dual_style_baseline'
-    DIR="--tfdir new_runs/$dataset/$exp/$irm"
+    DIR="--tfdir causal_runs/$dataset/$exp/$irm"
     CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed --exp $exp --visualize_prediction # --visualize_embedding
 done
 #CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed 5 --visualize_embedding

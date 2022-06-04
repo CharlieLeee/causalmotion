@@ -235,8 +235,12 @@ def main(args):
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
         
         if training_step == 'P5':
-            freeze(True, (model.inv_encoder, model.style_encoder, model.decoder.mlp1, model.decoder.mlp2))
-            freeze(False, (model.decoder.style_blocks,))
+            if args.causal_decoder:
+                freeze(True, (model.inv_encoder, model.style_encoder, model.decoder.decoder))
+                freeze(False, (model.decoder.inv_norm_layer, model.decoder.style_norm_layer))
+            else:
+                freeze(True, (model.inv_encoder, model.style_encoder, model.decoder.mlp1, model.decoder.mlp2))
+                freeze(False, (model.decoder.style_blocks,))
         elif training_step == 'P6':
             freeze(True, (model.inv_encoder,))
             freeze(False, (model.decoder, model.style_encoder))
@@ -262,11 +266,18 @@ def main(args):
                     metric = validate_ade(model, valid_dataset, epoch, training_step, writer, stage='validation', rp=ref_pictures, args=args)
                     # validate on the training set and save to tensorboard
                     validate_ade(model, train_dataset, epoch, training_step, writer, stage='training', rp=ref_pictures, args=args)
+                    validate_ade(model, valid_dataseto, epoch, training_step, writer, stage='validation_o', rp=ref_pictures, args=args)
                     
                 else:
                     metric = validate_er(model, valid_dataset, epoch, writer, stage='validation')
+                    validate_ade(model, valid_dataset, epoch, training_step, writer, stage='validation', rp=ref_pictures, args=args)
+                    validate_ade(model, train_dataset, epoch, training_step, writer, stage='training', rp=ref_pictures, args=args)
+                    validate_ade(model, valid_dataseto, epoch, training_step, writer, stage='validation_o', rp=ref_pictures, args=args)
             elif training_step in ['P3', 'P5', 'P6']:
                 metric = validate_ade(model, valid_dataset, epoch, training_step, writer, stage='validation', rp=ref_pictures, args=args)
+                validate_ade(model, train_dataset, epoch, training_step, writer, stage='training', rp=ref_pictures, args=args)
+                validate_ade(model, valid_dataseto, epoch, training_step, writer, stage='validation_o', rp=ref_pictures, args=args)
+                
 
             #### EVALUATE ALSO THE TRAINING ADE and the validation loss
             # validate_ade(model, valid_dataset_o, epoch, training_step, writer, stage='validation_o')
@@ -407,7 +418,8 @@ def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, rp=N
                         args.exp, epoch, loader_name, seq_id, batch_idx, raw_ade[seq_id], raw_fde[seq_id])
                     bar_figname = './images/visualization/{}/epoch{}_{}_{:02d}_mean_ade{:.3f}_fde{:.3f}_bar.png'.format(
                         args.exp, epoch, loader_name, batch_idx, ade_, fde_)
-                    bar_buf = plotbar(raw_ade, raw_fde, figname=bar_figname, epoch=epoch)
+                    bartitle = 'mean_ADE: {:.3f} | FDE:{:.3f}'.format(ade_, fde_)
+                    bar_buf = plotbar(raw_ade, raw_fde, figname=bar_figname, epoch=epoch, title=bartitle)
                     figtitle = 'Epoch {} Seq{} ADE{:.3f}  FDE{:.3f}'.format(epoch, seq_id, raw_ade[seq_id], raw_fde[seq_id])
                     scene_buf = sceneplot(obsv_scene.permute(1, 0, 2).cpu().detach().numpy(), pred_scene.permute(1, 0, 2).cpu().detach().numpy(), 
                                 gt_scene.permute(1, 0, 2).cpu().detach().numpy(), figname=figname, title=figtitle)

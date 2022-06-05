@@ -3,7 +3,6 @@
 
 GPU=1 # 0. Set GPU
 EVALUATION="--metrics accuracy"
-exp="contrast_dual_style_causaldecode_group"
 dataset="synthetic_lr_v2" # 1. Set Dataset
 dset_type="test"
 bs=64
@@ -11,7 +10,8 @@ reduceall=9000
 shuffle=False
 dbottle=16
 Visualize="--visualize_embedding --visualize_prediction"
-norm='group'
+norm='none'
+exp="contrast_dual_style_causaldecode_${norm}"
 
 step="P6" 
 epochs_string='0-0-100-100-50-500'

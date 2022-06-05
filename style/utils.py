@@ -701,7 +701,7 @@ def sceneplot(obsv_scene, pred_scene, gt_scene, figname='scene.png', lim=9.0, nu
     return buf
     
     
-def plotbar(raw_ade, raw_fde, figname, epoch=None, title="", save_to_disk=False):
+def plotbar(raw_ade, raw_fde, figname, epoch=None, title="", save_to_disk=True):
     fig, axes = plt.subplots(ncols=1, nrows=2, sharex=True, figsize=(12, 7))
     axes[0].bar(np.arange(raw_ade.shape[0]), raw_ade)
     axes[0].set_title('ADE')

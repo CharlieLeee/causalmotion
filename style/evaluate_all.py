@@ -106,7 +106,7 @@ def evaluate(args, loaders, model):
             if args.visualize_prediction:
                 bar_figname = './images/eval/visualization/{}_epoch_{}/seed_{}_{}/env_{}_mean_ade{:.3f}_fde{:.3f}_bar.png'.format(
                             args.exp, epoch, args.seed, args.dset_type, args.filter_envs, ade_, fde_)
-                plotbar(np.concatenate(ade_arr), np.concatenate(fde_arr), figname=bar_figname, title='env_{}'.format(args.filter_envs))
+                plotbar(np.concatenate(ade_arr), np.concatenate(fde_arr), figname=bar_figname, title='env_{} ade {:.3f} fde {:.3f}'.format(args.filter_envs, ade_, fde_))
 
         logging.info('ADE: {:.4f}\tFDE: {:.4f}'.format(ade_tot_meter.avg, fde_tot_meter.avg))
 

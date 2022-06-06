@@ -115,6 +115,7 @@ def get_training_parser():
     parser.add_argument("--visualize_prediction", action='store_true', default=False, help='save prediction during training') 
     parser.add_argument("--causal_decoder", action='store_true', default=False, help='use causal decoder') 
     parser.add_argument("--norm_type", default='group', type=str, help='Type of normalization method in causal integrator')
+    parser.add_argument("--use_sam", default=False, action='store_true', help='use SAM as optimizer for the invariant part')
     
     
     

@@ -91,9 +91,7 @@ class CausalDecoder(nn.Module):
             # Also return two concatenated embeddings
             return out, [first_concat, second_concat]
         return out, [None, None]
-        
-        
-        
+              
 
 class GTEncoder(nn.Module):
     def __init__(self, args, style_dim=8):

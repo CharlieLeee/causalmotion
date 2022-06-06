@@ -9,6 +9,7 @@ from losses import criterion
 from visualize import draw_image, draw_solo, draw_solo_all
 import PIL.Image
 from torchvision.transforms import ToTensor
+from sam.sam import SAM
 
 from loguru import logger
 
@@ -137,6 +138,23 @@ def main(args):
 
     # create the model
     model = CausalMotionModel(args).cuda()
+    
+    
+    
+    # setup optimizer for invariant part
+    if args.use_sam:
+        base_optimizer = torch.optim.SGD
+        inv_optimizer = SAM(model.inv_encoder.parameters(), base_optimizer, lr=args.lrstgat)
+        decode_optimizer = SAM(model.decoder.parameters(), base_optimizer, lr=args.lrstgat)
+    else:
+        inv_optimizer = torch.optim.Adam(
+                model.inv_encoder.parameters(),
+                lr=args.lrstgat,
+            )
+        decode_optimizer = torch.optim.Adam(
+            model.decoder.parameters(),
+            lr=args.lrstgat,
+        )
 
     # style related optimizer
     optimizers = {
@@ -151,14 +169,8 @@ def main(args):
                 {"params": model.gt_encoder.encoder.parameters(), "lr": args.lrstyle},
             ]
         ),
-        'inv': torch.optim.Adam(
-            model.inv_encoder.parameters(),
-            lr=args.lrstgat,
-        ),
-        'decoder': torch.optim.Adam(
-            model.decoder.parameters(),
-            lr=args.lrstgat,
-        ),
+        'inv': inv_optimizer,
+        'decoder': decode_optimizer,
         'integ': (torch.optim.Adam(
             [
                {"params": model.decoder.style_blocks.parameters(), 'lr': args.lrinteg}, 
@@ -330,6 +342,12 @@ def train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, t
         # compute loss (which depends on the training step)
         loss, ped_tot = criterion(model, train_iter, pretrain_iter, train_dataset, pretrain_dataset, training_step, args, stage, epoch, batch_idx)
         
+        # Use SAM to train invariant part
+        def closure():
+            loss, _ = criterion(model, train_iter, pretrain_iter, train_dataset, pretrain_dataset, training_step, args, stage, epoch, batch_idx, go_on=False)
+            loss.backward()
+            return loss
+        
         # backpropagate if needed
         if stage == 'training' and update:
             loss.backward()
@@ -341,12 +359,15 @@ def train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, t
                 if training_step in [               'P4',     'P6'] and args.finetune in ['style', 'integ+']  : optimizers['style'].step()
                 if training_step in [                    'P5','P6'] and args.finetune in ['integ', 'integ+']  : optimizers['integ'].step()
             else:
-                if training_step in ['P1','P2','P3',              ]: optimizers['inv'].step()
-                if training_step in [          'P3',          'P6']: optimizers['decoder'].step()
+                if training_step in ['P1','P2','P3',              ]: 
+                    optimizers['inv'].step(closure) if args.use_sam else optimizers['inv'].step()
+                    
+                if training_step in [          'P3',          'P6']: 
+                    optimizers['decoder'].step(closure) if args.use_sam else optimizers['decoder'].step()
                 if training_step in [               'P4',     'P6']: 
                     if args.gt_style:
-                        optimizers['inv'].step()
-                        optimizers['decoder'].step()
+                        optimizers['inv'].step(closure) if args.use_sam else optimizers['inv'].step()
+                        optimizers['decoder'].step(closure) if args.use_sam else optimizers['decoder'].step()
                         optimizers['gt_style'].step()
                     else:
                         optimizers['style'].step()

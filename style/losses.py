@@ -101,8 +101,9 @@ class CustomLoss(nn.Module):
     def __init__(self):
         super(CustomLoss, self).__init__()
         self.contrastive_loss = SupConLoss()
+        self.batch = None
     
-    def forward(self, model, train_iter, pretrain_iter, train_dataset, pretrain_dataset, training_step, args, stage, epoch, batch_idx=None):
+    def forward(self, model, train_iter, pretrain_iter, train_dataset, pretrain_dataset, training_step, args, stage, epoch, batch_idx=None, go_on=True):
         assert(training_step in ['P3', 'P4', 'P5', 'P6'])
         batch_loss = []
         env_embeddings, label_embeddings = [], [] # to store the low dim feat space for contrastive style loss, and their labels
@@ -112,7 +113,11 @@ class CustomLoss(nn.Module):
         # COMPUTE LOSS ON EACH OF THE ENVIRONMENTS
         for env_iter, env_name in zip(train_iter, train_dataset['names']):
             try:
-                batch = next(env_iter)
+                if go_on: # if use SAM then do not go on
+                    batch = next(env_iter)
+                    self.batch = batch
+                batch = self.batch
+                
                 radius = float(env_name.split('_')[7])
                 rule = 1. if 'True_clockwise' in env_name else -1.
             except StopIteration:

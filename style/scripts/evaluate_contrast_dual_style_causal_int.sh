@@ -11,11 +11,11 @@ shuffle=False
 dbottle=16
 Visualize="--visualize_embedding --visualize_prediction"
 norm='none'
-exp="contrast_dual_style_causaldecode_${norm}"
+
 
 step="P6" 
-epochs_string='0-0-100-100-50-500'
-epoch=300
+epochs_string='0-0-100-200-100-700'
+epoch=1100
 irm=1.0 # 2. Set IRM
 for f_envs in "0.1l" "0.1r" "0.2l" "0.2r" "0.3l" "0.3r" "0.4l" "0.4r" "0.5l" "0.5r" "0.6l" "0.6r" "0.7l" "0.7r" 
 do
@@ -23,6 +23,7 @@ do
     DATA="--dataset_name $dataset --filter_envs $f_envs --batch_size $bs --dset_type $dset_type --classification 6 --shuffle ${shuffle}"
     for seed in 1 #1 2 3 4
     do  
+        exp="contrast_dual_style_causaldecode_${norm}_OOD_seed_${seed}_mored"
         CUDA_VISIBLE_DEVICES=$GPU python evaluate_all.py ${MODEL} $DATA $EVALUATION --resume "models/$dataset/$exp/$step/$irm/SSE_data_${dataset}_irm[${irm}]_filter_envs[0.1l-0.1r-0.3l-0.3r-0.5l-0.5r]_ep_[$epochs_string]_seed_${seed}_tstep_${step}_epoch_${epoch}_reduceall[$reduceall]_relsocial[True]stylefs[all].pth.tar" --exp ${exp} --seed $seed ${Visualize} 
     done
     # seed=5

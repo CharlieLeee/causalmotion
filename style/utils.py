@@ -721,3 +721,7 @@ def plotbar(raw_ade, raw_fde, figname, epoch=None, title="", save_to_disk=True):
     buf.seek(0)
     plt.close()
     return buf
+
+
+def count_model_params(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)

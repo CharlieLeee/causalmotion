@@ -1,6 +1,6 @@
 # Style contrastive with dual styles
 ## General parameters
-GPU=2 # 1. Set GPU
+GPU=1 # 1. Set GPU
 
 dataset='synthetic_lr_v2' # 2. Set dataset
 f_envs='0.1l-0.1r-0.3l-0.3r-0.5l-0.5r'
@@ -30,9 +30,9 @@ norm='none'
 
 for seed in 1 #2 3 4 5
 do  
-    for norm in 'layer' 'group' # 'none' 
+    for lr in 1e-4 5e-5 # 'layer' 'group' # 'none' 
     do
-        exp="contrast_dual_style_causaldecode_${norm}_OOD_sam"
+        exp="contrast_dual_style_causaldecode_${norm}_OOD_sam_${lr}"
         DIR="--tfdir causal_runs/$dataset/$exp/$irm"
         TRAINING="--num_epochs $e --batch_size $bs --irm $irm --decoder_bottle $dbottle --lrstgat $lr --norm_type ${norm} --causal_decoder --use_sam"
         CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed --exp $exp --visualize_prediction & # --visualize_embedding

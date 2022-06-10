@@ -172,6 +172,15 @@ def main(args):
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_num
     generator = CausalMotionModel(args).cuda()
     load_all_model(args, generator, None)
+    
+    # print model's parameters
+    print('# Parameters in model.inv_encoder: ', count_model_params(generator.inv_encoder))
+    print('# Parameters in model.style_encoder (not necessarily used): ', count_model_params(generator.style_encoder))
+    print('# Parameters in model.gt_encoder (not necessarily used): ', count_model_params(generator.gt_encoder))
+    decoder_type = 'causal' if args.causal_decoder else 'non-causal'
+    print('# Parameters in model.decoder ({}): {}'.format(
+        decoder_type, count_model_params(generator.decoder)))
+    
     envs_path, envs_name = get_envs_path(args.dataset_name, args.dset_type, args.filter_envs)
     loaders = [data_loader(args, env_path, env_name) for env_path, env_name in zip(envs_path, envs_name)]
     logging.info('Model: {}'.format(args.resume))

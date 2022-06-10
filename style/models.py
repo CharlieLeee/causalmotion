@@ -54,9 +54,9 @@ class CausalDecoder(nn.Module):
             self.style_norm_layer = nn.Identity()
         
         self.decoder = nn.Sequential(
-            nn.Linear(style_dim+invariant_dim, 2*decoder_bottle* style_dim),
+            nn.Linear(style_dim+invariant_dim, 1*decoder_bottle* style_dim),
             nn.ReLU(),
-            nn.Linear(2*decoder_bottle* style_dim, 2*decoder_bottle* style_dim),
+            nn.Linear(1*decoder_bottle* style_dim, 2*decoder_bottle* style_dim),
             nn.ReLU(),
             nn.Linear(2*decoder_bottle* style_dim, num_agents*2*fut_len)
         )
@@ -284,19 +284,11 @@ class SimpleDecoder(nn.Module):
         self.mlp1 = nn.Sequential(
             nn.Linear(hidden_size*2, 2*decoder_bottle* hidden_size),
             nn.ReLU(),
-            nn.Linear(2*decoder_bottle* hidden_size, 2*decoder_bottle* hidden_size),
-            nn.ReLU(),
-            nn.Linear(2*decoder_bottle* hidden_size, 2*decoder_bottle* hidden_size),
-            nn.ReLU(),
             nn.Linear(2*decoder_bottle* hidden_size, 4* hidden_size)
         )
 
         self.mlp2 = nn.Sequential(
             nn.Linear(4* hidden_size, number_of_agents*decoder_bottle*fut_len),
-            nn.ReLU(),
-            nn.Linear(number_of_agents*decoder_bottle*fut_len, number_of_agents*decoder_bottle*fut_len),
-            nn.ReLU(),
-            nn.Linear(number_of_agents*decoder_bottle*fut_len, number_of_agents*decoder_bottle*fut_len),
             nn.ReLU(),
             nn.Linear(number_of_agents*decoder_bottle*fut_len, number_of_agents*2*fut_len)
         )

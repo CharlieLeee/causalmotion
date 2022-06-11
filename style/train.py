@@ -36,7 +36,7 @@ def main(args):
     # args.filter_envs_pretrain = ''
 
     logging.info("Initializing Validation O Set")
-    val_envs_patho, val_envs_nameo = get_envs_path(args.dataset_name, "test", '0.9')
+    val_envs_patho, val_envs_nameo = get_envs_path(args.dataset_name, "val", '0.7')
     val_loaderso = [data_loader(args, val_env_path, val_env_name) for val_env_path, val_env_name in
                    zip(val_envs_patho, val_envs_nameo)]
     logging.info(val_envs_nameo)
@@ -96,6 +96,7 @@ def main(args):
         val_labelso = {name: all_valid_labelso.index(get_label_name(name)) for name in val_envs_nameo}
         logger.info('train_labels: {}'.format(train_labels))
         logger.info('val_labels: {}'.format(val_labels))
+        logger.info('val_labelso: {}'.format(val_labels))
     else:
         all_train_labels = sorted(set([float(d.split('_')[7]) for d in train_envs_name]))
         all_valid_labels = sorted(set([float(d.split('_')[7]) for d in val_envs_name]))
@@ -145,7 +146,10 @@ def main(args):
     if args.use_sam:
         base_optimizer = torch.optim.SGD
         inv_optimizer = SAM(model.inv_encoder.parameters(), base_optimizer, lr=args.lrstgat, momentum=0.9, weight_decay=0.0005)
-        decode_optimizer = SAM(model.decoder.parameters(), base_optimizer, lr=args.lrstgat, momentum=0.9, weight_decay=0.0005)
+        decode_optimizer = torch.optim.Adam(
+            model.decoder.parameters(),
+            lr=args.lrstgat,
+        )
     else:
         inv_optimizer = torch.optim.Adam(
                 model.inv_encoder.parameters(),
@@ -248,8 +252,11 @@ def main(args):
         
         if training_step == 'P5':
             if args.causal_decoder:
-                freeze(True, (model.inv_encoder, model.style_encoder, model.decoder.decoder))
-                freeze(False, (model.decoder.inv_norm_layer, model.decoder.style_norm_layer))
+                if args.hierarchical:
+                    freeze(True, (model.inv_encoder, model.style_encoder, model.decoder))
+                else:
+                    freeze(True, (model.inv_encoder, model.style_encoder, model.decoder.decoder))
+                    freeze(False, (model.decoder.inv_norm_layer, model.decoder.style_norm_layer))
             else:
                 freeze(True, (model.inv_encoder, model.style_encoder, model.decoder.mlp1, model.decoder.mlp2))
                 freeze(False, (model.decoder.style_blocks,))
@@ -363,11 +370,11 @@ def train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, t
                     optimizers['inv'].step(closure) if args.use_sam else optimizers['inv'].step()
                     
                 if training_step in [          'P3',          'P6']: 
-                    optimizers['decoder'].step(closure) if args.use_sam else optimizers['decoder'].step()
+                    optimizers['decoder'].step()
                 if training_step in [               'P4',     'P6']: 
                     if args.gt_style:
                         optimizers['inv'].step(closure) if args.use_sam else optimizers['inv'].step()
-                        optimizers['decoder'].step(closure) if args.use_sam else optimizers['decoder'].step()
+                        optimizers['decoder'].step()
                         optimizers['gt_style'].step()
                     else:
                         optimizers['style'].step()
@@ -427,7 +434,7 @@ def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, rp=N
                 seq_id = max_id # 0
                 
                 # Visualize first batch every 10 epochs of OOD performance
-                if args.visualize_prediction and batch_idx == 0 and (epoch % 10 == 0) and stage == ('validation_o' or 'validation'):
+                if args.visualize_prediction and batch_idx == 0 and (epoch % 1 == 0) and (stage in ['validation_o', 'validation']):
                 # visualize output
                     idx_start, idx_end = seq_start_end[seq_id//2][0], seq_start_end[seq_id//2][1]
                     obsv_scene = obs_traj[:, idx_start:idx_end, :]
@@ -451,10 +458,11 @@ def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, rp=N
                                 gt_scene.permute(1, 0, 2).cpu().detach().numpy(), figname=figname, title=figtitle)
                     bar_img = PIL.Image.open(bar_buf)
                     bar_img = ToTensor()(bar_img)
-                    writer.add_image('{}: Bar Image of {}'.format(scene_name, batch_idx), bar_img, epoch)
-                    scene_img = PIL.Image.open(scene_buf)
-                    scene_img = ToTensor()(scene_img)
-                    writer.add_image('{}: Scene Image of {}'.format(scene_name, batch_idx), scene_img, epoch)
+                    if write:
+                        writer.add_image('{}: Bar Image of {}'.format(scene_name, batch_idx), bar_img, epoch)
+                        scene_img = PIL.Image.open(scene_buf)
+                        scene_img = ToTensor()(scene_img)
+                        writer.add_image('{}: Scene Image of {}'.format(scene_name, batch_idx), scene_img, epoch)
 
             logging.info(f'\t\t ADE on {loader_name:<25} dataset:\t {ade_meter.avg}')
 

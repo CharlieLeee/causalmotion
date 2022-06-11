@@ -25,6 +25,63 @@ class ConcatBlock(nn.Module):
         out = self.perceptron(content_and_style)
         return out + x
     
+    
+class Hierarchical_Decoder(nn.Module):
+    
+    def __init__(self, args, obs_len, fut_len, invariant_dim, style_dim, num_agents):
+        print('Using hierarchical causal decoder...')
+        super().__init__()
+        self.args = args
+        self.obs_len = obs_len
+        self.fut_len = fut_len
+        self.invariant_dim = invariant_dim
+        self.style_dim = style_dim
+        self.num_agents = num_agents
+        
+        self.block1 = nn.Sequential(
+            nn.Linear(invariant_dim, 2*invariant_dim),
+            nn.ReLU()
+        )
+        
+        self.block2 = nn.Sequential(
+            nn.Linear(style_dim+2*invariant_dim, 4*invariant_dim),
+            nn.ReLU()
+        )
+        self.block3 = nn.Sequential(
+            nn.Linear(4*invariant_dim+style_dim, 8*invariant_dim),
+            nn.ReLU(),
+        )
+        self.block4 = nn.Sequential(
+            nn.Linear(8*invariant_dim+style_dim, 2*4*fut_len),
+            nn.ReLU(),
+            nn.Linear(2*4*fut_len, 4*fut_len)
+        )
+    
+    def forward(self, latent_space, style_feat_space=None):
+        latent_space = torch.stack(latent_space.split(2, dim=0), dim=0)
+        
+        bz = latent_space.size(0)
+        latent_space = latent_space.flatten(start_dim=1)
+        
+        if style_feat_space is not None:
+            style_feat_space = style_feat_space.repeat(bz, 1)
+            style_feat_space = style_feat_space - style_feat_space.mean(axis=1).reshape(-1, 1)
+        else:
+            style_feat_space = torch.zeros(bz, self.style_dim).cuda()
+            
+        out = self.block1(latent_space)
+        out = torch.cat((out, style_feat_space), dim=1)
+        out = self.block2(out)
+        out = torch.cat((out, style_feat_space), dim=1)
+        out = self.block3(out)
+        out = torch.cat((out, style_feat_space), dim=1)
+        out = self.block4(out)
+        out = torch.reshape(out, (out.shape[0], self.num_agents, self.fut_len, 2))
+        out = out.flatten(start_dim=0, end_dim=1)
+        out = torch.permute(out, (1, 0, 2))
+        
+        return out, [None, None]
+    
 class CausalDecoder(nn.Module):
     def __init__(self, args, obs_len, fut_len, invariant_dim, style_dim, num_agents, normalize_type='group', decoder_bottle=2) -> None:
         super().__init__()
@@ -38,7 +95,7 @@ class CausalDecoder(nn.Module):
         self.normalize_type = normalize_type
         print('normalize_type: ', normalize_type)
 
-        if normalize_type not in ['layer', 'batch' , 'group', 'none']:
+        if normalize_type not in ['layer', 'batch' , 'group', 'none', 'stylenorm']:
             raise ValueError('normalize type: {} not in required list!'.format(normalize_type))
         if normalize_type == 'layer':
             self.inv_norm_layer = nn.LayerNorm(invariant_dim)
@@ -49,9 +106,10 @@ class CausalDecoder(nn.Module):
         elif normalize_type == 'group':
             self.inv_norm_layer = nn.GroupNorm(num_groups=num_agents, num_channels=invariant_dim)
             self.style_norm_layer = nn.GroupNorm(num_groups=1, num_channels=style_dim)
-        elif normalize_type == 'none':
+        elif normalize_type in ['none', 'stylenorm']:
             self.inv_norm_layer = nn.Identity()
             self.style_norm_layer = nn.Identity()
+            
         
         self.decoder = nn.Sequential(
             nn.Linear(style_dim+invariant_dim, 1*decoder_bottle* style_dim),
@@ -77,6 +135,8 @@ class CausalDecoder(nn.Module):
             
         latent_space = self.inv_norm_layer(latent_space)
         style_feat_space = self.style_norm_layer(style_feat_space)
+        if self.normalize_type == 'stylenorm':
+            style_feat_space -= style_feat_space.mean(axis=1).reshape(-1, 1)
         out = torch.cat((latent_space, style_feat_space), dim=1)
         first_concat = out
         second_concat = None
@@ -338,16 +398,27 @@ class CausalMotionModel(nn.Module):
         self.style_encoder = SimpleStyleEncoder(args)
         self.gt_encoder = GTEncoder(args)
         if args.causal_decoder:        
-            self.decoder = CausalDecoder(
-                args,
-                args.obs_len,
-                args.fut_len,
-                latent_space_size*2,
-                style_dim=self.gt_encoder.style_dim if args.gt_style else self.style_encoder.style_dim,
-                num_agents=NUMBER_PERSONS,
-                normalize_type=args.norm_type,
-                decoder_bottle=args.decoder_bottle
-            )
+            if not args.hierarchical:
+                self.decoder = CausalDecoder(
+                    args,
+                    args.obs_len,
+                    args.fut_len,
+                    latent_space_size*2,
+                    style_dim=self.gt_encoder.style_dim if args.gt_style else self.style_encoder.style_dim,
+                    num_agents=NUMBER_PERSONS,
+                    normalize_type=args.norm_type,
+                    decoder_bottle=args.decoder_bottle
+                )
+            else:
+                # use hierarchical style injection
+                self.decoder = Hierarchical_Decoder(
+                    args,
+                    args.obs_len,
+                    args.fut_len,
+                    latent_space_size*2,
+                    style_dim=self.gt_encoder.style_dim if args.gt_style else self.style_encoder.style_dim,
+                    num_agents=NUMBER_PERSONS
+                )
         else:
             self.decoder = SimpleDecoder(
                 args,

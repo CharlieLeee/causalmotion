@@ -30,7 +30,7 @@ seed=1
 for seed in 1 2 3
 do  
     exp="contrast_dual_style_baseline_${seed}_OOD7_with_sam"
-    DIR="--tfdir final_runs/$dataset/$exp/$irm"
+    DIR="--tfdir fin_runs/$dataset/$exp/$irm"
     TRAINING="--num_epochs $e --batch_size $bs --irm $irm --decoder_bottle $dbottle --lrstgat $lr --use_sam"
     CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed --exp $exp --visualize_prediction & # --visualize_embedding
 done

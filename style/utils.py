@@ -516,7 +516,7 @@ def save_all_model(args, model, optimizers, metric, epoch, training_step):
 
     if args.model_dir: filefolder = f'{args.model_dir}/{training_step}'
     else: 
-        if args.finetune: phase='finetune'
+        if args.finetune: phase='finetune_' + args.exp
         else: 
             phase= args.exp
         #filefolder = f'./models/{args.dataset_name}/{phase}/{training_step}/{args.irm}/{real_style_integ}'

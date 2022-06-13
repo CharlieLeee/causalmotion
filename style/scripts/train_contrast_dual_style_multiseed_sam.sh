@@ -1,6 +1,6 @@
 # Style contrastive with dual styles
 ## General parameters
-GPU=0 # 1. Set GPU
+GPU=2 # 1. Set GPU
 
 dataset='synthetic_lr_v2' # 2. Set dataset
 f_envs='0.1l-0.1r-0.3l-0.3r-0.5l-0.5r'
@@ -23,15 +23,15 @@ bs=64
 USUAL="--contrastive 1 --classification 6" 
 e='0-0-100-200-100-700'
 irm=1.0 # 3. Set IRM weight
-# dbottle=16
-lr=1e-3
+dbottle=16
+lr=5e-4
 seed=1
 
-for dbottle in 32 64 128 256
+for seed in 1 2 3
 do  
-    exp="contrast_dual_style_multiseed_${seed}_OOD7_db_$dbottle"
+    exp="contrast_dual_style_multiseed_${seed}_OOD7_with_sam"
     DIR="--tfdir final_runs/$dataset/$exp/$irm"
-    TRAINING="--num_epochs $e --batch_size $bs --irm $irm --decoder_bottle $dbottle --lrstgat $lr "
+    TRAINING="--num_epochs $e --batch_size $bs --irm $irm --decoder_bottle $dbottle --lrstgat $lr --use_sam"
     CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed --exp $exp --visualize_prediction & # --visualize_embedding
 done
 

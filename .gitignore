@@ -153,3 +153,5 @@ style/notebooks/*.pdf
 style/new_runs/*
 style/causal_runs/*
 style/compare_runs/*
+style/ft_runs/*
+style/final_runs/*

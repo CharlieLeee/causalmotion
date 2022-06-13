@@ -210,7 +210,7 @@ if __name__ == "__main__":
     args = get_evaluation_parser().parse_args()
     model_param = args.resume.split('/')
     try:
-        set_logger(os.path.join(args.log_dir, args.dataset_name,'finetune' if args.finetune else 'pretrain',
+        set_logger(os.path.join(args.log_dir, args.dataset_name,'finetune_'+args.exp if args.finetune else args.exp,
                                 f'exp_{model_param[2]}_irm_{model_param[3]}_data_{args.dset_type}_{args.filter_envs}_ft_{model_param[4]}_red_{model_param[5][7:-8]}_seed_{args.seed}_reduce_{args.reduce}.log'))
     except:
         pass

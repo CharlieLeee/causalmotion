@@ -25,18 +25,22 @@ e='0-0-100-200-100-700' # Notice: if use sam, better cut the inv and decoder tra
 irm=1.0 # 3. Set IRM weight
 dbottle=16
 lr=1e-3
-norm='none'
+norm='none' #'none'
+seed=1
 
-
-for seed in 1 2 3 4 5
-do  
-    for norm in 'none'  # 'layer' 'group' # 'none' # 'none' 
-    do
-        exp="contrast_dual_style_causaldecode_${norm}_OOD9_seed_${seed}_mored"
-        DIR="--tfdir compare_runs/$dataset/$exp/$irm"
-        TRAINING="--num_epochs $e --batch_size $bs --irm $irm --decoder_bottle $dbottle --lrstgat $lr --norm_type ${norm} --causal_decoder"
-        CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed --exp $exp --visualize_prediction & # --visualize_embedding
-    done
+for dbottle in 16 32 64
+do   
+    exp="contrast_dual_style_causaldecode_${norm}_OOD7_seed_${seed}_db_$dbottle"
+    DIR="--tfdir final_runs/$dataset/$exp/$irm"
+    TRAINING="--num_epochs $e --batch_size $bs --irm $irm --decoder_bottle $dbottle --lrstgat $lr --norm_type ${norm} --causal_decoder"
+    CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed --exp $exp --visualize_prediction & # --visualize_embedding
 done
-#CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed 5 --visualize_embedding
+
+# Izar does not accept command end with &
+# seed=3
+dbottle=128
+exp="contrast_dual_style_causaldecode_${norm}_OOD7_seed_${seed}_db_$dbottle"
+DIR="--tfdir final_runs/$dataset/$exp/$irm"
+TRAINING="--num_epochs $e --batch_size $bs --irm $irm --decoder_bottle $dbottle --lrstgat $lr --norm_type ${norm} --causal_decoder"
+CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed --exp $exp --visualize_prediction
 

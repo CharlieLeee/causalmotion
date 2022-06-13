@@ -12,13 +12,13 @@ bs=64
 
 e='0-0-0-1000-0-0'
 # irm=1.0 # 3. Set IRM weight
-dbottle=16
+dbottle=64
 irm=1.0
 lr=1e-3
 enwidth=8
 norm='none'
 
-for seed in  2 3 4 5 #1
+for seed in 1 2 3
 do
     exp="gt_style_causal_int_norm_${norm}"
     echo $exp
@@ -27,36 +27,3 @@ do
     echo $DIR
     CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed &
 done
-#CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed 5
-
-
------------------------------- Experiment script below ------------------------
-
-### Training best learning rate
-# e='0-0-0-50-0-0'
-# # irm=1.0 # 3. Set IRM weight
-# dbottle=16
-# enwidth=8
-# train_len=30
-# DATA="--dataset_name $dataset --filter_envs $f_envs --reduceall ${train_len}"
-
-
-# for seed in 1 #2 3 4
-# do
-#     for irm in 0.0 #1.0 #32 #8
-#     do
-#         for stylelr in  1e-3 5e-3 1e-2 5e-4 #1e-3 5e-4 # 1e-3 3e-4  
-#         do
-#             for stgatlr in 1e-3 5e-3 1e-2 5e-4 #16 32 64
-#             do
-#                 exp="gt_style_${enwidth}_${train_len}_${dbottle}_style_${stylelr}_stgat_${stgatlr}_tweaking"
-#                 echo $exp
-#                 DIR="--tfdir runs/${dataset}/${exp}/${irm}"
-#                 TRAINING="--num_epochs $e --batch_size $bs --counter false --irm $irm --exp $exp --lrstyle $stylelr --gt_style --gt_encoder $enwidth --decoder_bottle $dbottle --lrstgat $stgatlr --visualize_prediction" # 4. Set Counter --visualize_prediction
-#                 echo $DIR
-#                 CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed &
-#             done 
-            
-#         done
-#     done
-# done

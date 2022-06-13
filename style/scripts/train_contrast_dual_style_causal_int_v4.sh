@@ -23,24 +23,23 @@ bs=64
 USUAL="--contrastive 1 --classification 3" 
 e='0-0-100-200-100-700' # Notice: if use sam, better cut the inv and decoder training to half to keep fairness
 irm=1.0 # 3. Set IRM weight
-dbottle=16
+dbottle=64
 lr=1e-3
-norm='none'
+norm='none' # 'stylenorm'
 
 
 for seed in 1 2 3 4 5
 do  
-    exp="contrast_dual_style_baseline_v4_OOD6_seed_${seed}"
+    exp="contrast_dual_style_baseline_v4_OOD7_seed_${seed}"
     DIR="--tfdir compare_runs/$dataset/$exp/$irm"
     TRAINING="--num_epochs $e --batch_size $bs --irm $irm --decoder_bottle $dbottle --lrstgat $lr "
     CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed --exp $exp --visualize_prediction & # --visualize_embedding
 done
-#CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed 5 --visualize_embedding
 
 USUAL="--contrastive 1 --classification 3" 
-e='0-0-100-200-100-700' # Notice: if use sam, better cut the inv and decoder training to half to keep fairness
+e='0-0-100-200-100-600' # Notice: if use sam, better cut the inv and decoder training to half to keep fairness
 irm=1.0 # 3. Set IRM weight
-dbottle=16
+dbottle=64
 lr=1e-3
 norm='none'
 

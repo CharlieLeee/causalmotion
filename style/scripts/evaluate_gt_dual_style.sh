@@ -10,7 +10,7 @@ bs=64
 reduceall=9000
 shuffle=False
 enwidth=8
-dbottle=16
+dbottle=64
 Visualize="--visualize_embedding --visualize_prediction"
 
 step="P4" 

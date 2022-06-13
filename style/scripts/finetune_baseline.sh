@@ -16,10 +16,10 @@ contrastive=0.05
 ## TO CHANGE DEPENDING ON PREVIOUS STEPS
 p6=300 # number of finetuning steps
 oldreduceall=9000
-epoch_string='0-0-100-200-100-700'
+epoch_string='0-0-100-200-100-600'
 epoch=1100 # sum of above
 irm=1.0 # 3. Set IRM (used in pretraining)
-dbottle=16
+dbottle=64
 
 for finetune in 'integ+'
 do

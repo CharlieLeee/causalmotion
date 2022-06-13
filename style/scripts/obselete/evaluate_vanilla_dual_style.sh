@@ -7,7 +7,7 @@ dataset="synthetic_lr_v2" # 1. Set Dataset
 dset_type="test"
 bs=64
 reduceall=9000
-dbottle=16
+dbottle=64
 
 # Baseline
 

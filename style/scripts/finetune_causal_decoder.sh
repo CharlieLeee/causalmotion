@@ -19,7 +19,7 @@ oldreduceall=9000
 epoch_string='0-0-100-200-100-700'
 epoch=500 # sum of above
 irm=1.0 # 3. Set IRM (used in pretraining)
-dbottle=16
+dbottle=64
 norm='none'
 
 for finetune in 'integ+'

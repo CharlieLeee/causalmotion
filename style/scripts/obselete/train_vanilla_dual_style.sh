@@ -27,7 +27,7 @@ bs=64
 e='0-0-1000-0-0-0'
 irm=1.0 # 3. Set IRM weight # without irm 0.06 0.1
 
-dbottle=16
+dbottle=64
 lr=1e-3
 
 

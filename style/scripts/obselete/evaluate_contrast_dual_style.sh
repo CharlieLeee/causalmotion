@@ -9,7 +9,7 @@ dset_type="test"
 bs=64
 reduceall=10000
 shuffle=False
-dbottle=16
+dbottle=64
 Visualize="--visualize_embedding --visualize_prediction"
 
 

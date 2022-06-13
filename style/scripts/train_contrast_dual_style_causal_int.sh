@@ -21,26 +21,22 @@ bs=64
 
 ### Ours with IRM
 USUAL="--contrastive 1 --classification 6" 
-e='0-0-100-200-100-700' # Notice: if use sam, better cut the inv and decoder training to half to keep fairness
+e='0-0-100-200-100-600' # Notice: if use sam, better cut the inv and decoder training to half to keep fairness
 irm=1.0 # 3. Set IRM weight
-dbottle=16
+dbottle=64
 lr=1e-3
-norm='none' #'none'
-seed=1
 
-for dbottle in 16 32 64
-do   
-    exp="contrast_dual_style_causaldecode_${norm}_OOD7_seed_${seed}_db_$dbottle"
-    DIR="--tfdir final_runs/$dataset/$exp/$irm"
-    TRAINING="--num_epochs $e --batch_size $bs --irm $irm --decoder_bottle $dbottle --lrstgat $lr --norm_type ${norm} --causal_decoder"
-    CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed --exp $exp --visualize_prediction & # --visualize_embedding
+for norm in 'stylenorm' 'group' 'layer'
+do
+    for seed in 1 2 3
+    do   
+        exp="contrast_dual_style_causaldecode_${norm}_OOD7_seed_${seed}"
+        DIR="--tfdir final_runs/$dataset/$exp/$irm"
+        TRAINING="--num_epochs $e --batch_size $bs --irm $irm --decoder_bottle $dbottle --lrstgat $lr --norm_type ${norm} --causal_decoder"
+        CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed --exp $exp --visualize_prediction & # --visualize_embedding
+    done
 done
 
 # Izar does not accept command end with &
 # seed=3
-dbottle=128
-exp="contrast_dual_style_causaldecode_${norm}_OOD7_seed_${seed}_db_$dbottle"
-DIR="--tfdir final_runs/$dataset/$exp/$irm"
-TRAINING="--num_epochs $e --batch_size $bs --irm $irm --decoder_bottle $dbottle --lrstgat $lr --norm_type ${norm} --causal_decoder"
-CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed $seed --exp $exp --visualize_prediction
 

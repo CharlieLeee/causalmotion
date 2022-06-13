@@ -13,9 +13,9 @@ bs=64
 
 e='0-0-0-1000-0-0'
 # irm=1.0 # 3. Set IRM weight
-dbottle=16
+dbottle=64
 
-for seed in 1 #2 3 4 5
+for seed in 1 2 3
 do
     for irm in 0.0 #1.0 
     do

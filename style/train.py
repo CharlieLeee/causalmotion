@@ -145,7 +145,7 @@ def main(args):
     # setup optimizer for invariant part
     if args.use_sam:
         base_optimizer = torch.optim.SGD
-        inv_optimizer = SAM(model.inv_encoder.parameters(), base_optimizer, lr=args.lrstgat, momentum=0.9, weight_decay=0.0005)
+        inv_optimizer = SAM(model.inv_encoder.parameters(), base_optimizer, lr=args.lrstgat)
         decode_optimizer = torch.optim.Adam(
             model.decoder.parameters(),
             lr=args.lrstgat,
@@ -434,7 +434,7 @@ def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, rp=N
                 seq_id = max_id # 0
                 
                 # Visualize first batch every 10 epochs of OOD performance
-                if args.visualize_prediction and batch_idx == 0 and (epoch % 1 == 0) and (stage in ['validation_o', 'validation']):
+                if args.visualize_prediction and batch_idx in [0, 2, 4] and (epoch % 10 == 0) and (stage in ['validation_o', 'validation']):
                 # visualize output
                     idx_start, idx_end = seq_start_end[seq_id//2][0], seq_start_end[seq_id//2][1]
                     obsv_scene = obs_traj[:, idx_start:idx_end, :]
@@ -444,9 +444,9 @@ def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, rp=N
                     # compute ADE and FDE metrics
                     if not os.path.exists('./images/visualization/{}_{}'.format(stage, args.exp)):
                         os.makedirs('./images/visualization/{}_{}'.format(stage, args.exp))
-                    figname = './images/visualization/{}_{}/{}_epoch{}_{}_seq_{:02d}_{:02d}_sample_ade{:.3f}_fde{:.3f}.png'.format(
+                    figname = './images/visualization/{}_{}/{}_epoch{}_{}_seq_{:02d}_{:02d}_sample_ade{:.3f}_fde{:.3f}.pdf'.format(
                         stage, args.exp, scene_name, epoch, loader_name, seq_id, batch_idx, raw_ade[seq_id], raw_fde[seq_id])
-                    bar_figname = './images/visualization/{}_{}/{}_epoch{}_{}_{:02d}_mean_ade{:.3f}_fde{:.3f}_bar.png'.format(
+                    bar_figname = './images/visualization/{}_{}/{}_epoch{}_{}_{:02d}_mean_ade{:.3f}_fde{:.3f}_bar.pdf'.format(
                         stage, args.exp, scene_name, epoch, loader_name, batch_idx, ade_, fde_)
                     bartitle = '{} mean_ADE: {:.3f} | FDE:{:.3f}'.format(
                         scene_name, ade_, fde_)
